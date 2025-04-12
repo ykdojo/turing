@@ -1,0 +1,23 @@
+{
+  "name": "turing",
+  "version": "1.0.0",
+  "description": "Terminal UI for AI chat",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": "dist/cli.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && node dist/cli.js",
+    "dev": "tsc -w"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.1.1",
+    "ink": "^5.2.0",
+    "react": "^18.3.1",
+    "typescript": "^5.8.3"
+  }
+}
