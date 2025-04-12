@@ -8,7 +8,9 @@
     "rootDir": "src",
     "strict": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "jsxFactory": "React.createElement"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
