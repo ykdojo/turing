@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import Spinner from 'ink-spinner';
+import { getAIResponse } from './api.js';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -19,23 +20,24 @@ export const App = () => {
   const [isComplete, setIsComplete] = useState(false);
   
   useEffect(() => {
+    const lastUserMessage = initialMessages[initialMessages.length - 1].content;
+    
     // Add loading message immediately
     setMessages(prev => [...prev, { role: 'assistant', content: '', isLoading: true }]);
     
-    // Replace with actual response after 2 seconds
-    const timer = setTimeout(() => {
-      setMessages(prev => {
-        const newMessages = [...prev];
-        newMessages[newMessages.length - 1] = {
-          role: 'assistant',
-          content: "Here's a simple React component example:\n\nfunction Greeting({ name }) {\n  return <h1>Hello, {name}!</h1>;\n}"
-        };
-        return newMessages;
+    // Get AI response
+    getAIResponse(lastUserMessage)
+      .then(response => {
+        setMessages(prev => {
+          const newMessages = [...prev];
+          newMessages[newMessages.length - 1] = {
+            role: 'assistant',
+            content: response
+          };
+          return newMessages;
+        });
+        setIsComplete(true);
       });
-      setIsComplete(true);
-    }, 2000);
-    
-    return () => clearTimeout(timer);
   }, []);
   
   return (
