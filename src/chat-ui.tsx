@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
 import Spinner from 'ink-spinner';
+import { GeminiAPI } from './gemini-api.js';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -8,16 +9,16 @@ interface Message {
   isLoading?: boolean;
 }
 
+// Initialize Gemini API with a working model
+const geminiApi = new GeminiAPI('gemini-2.0-flash-thinking-exp-01-21');
+
 export const ChatApp = () => {
-  // Sample initial messages
-  const initialMessages: Message[] = [
-    { role: 'assistant', content: 'Hello! How can I help you today?' },
-    { role: 'user', content: 'Can you tell me about yourself?' },
-    { role: 'assistant', content: 'I\'m a conversational AI assistant. I can answer questions, discuss various topics, and help with tasks. What would you like to know?' },
-  ];
+  // Start with a completely empty chat history
+  const initialMessages: Message[] = [];
   
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputText, setInputText] = useState('');
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
   const { exit } = useApp();
   
   // Handle keyboard input
@@ -35,7 +36,7 @@ export const ChatApp = () => {
           { role: 'user', content: inputText }
         ]);
         
-        // Store message for response
+        // Store message for API call
         const userMessage = inputText;
         setInputText('');
         
@@ -45,18 +46,45 @@ export const ChatApp = () => {
           { role: 'assistant', content: '', isLoading: true }
         ]);
         
-        // Mock API call with timeout
-        setTimeout(() => {
-          setMessages(prev => {
-            const newMsgs = [...prev];
-            // Replace loading message with actual response
-            newMsgs[newMsgs.length - 1] = { 
-              role: 'assistant', 
-              content: `You said: "${userMessage}". This is a mock response.` 
-            };
-            return newMsgs;
+        // Format history for Gemini API
+        const formattedHistory = messages
+          .filter(msg => !msg.isLoading) // Filter out loading messages
+          .map(msg => ({
+            role: msg.role === 'assistant' ? 'model' : 'user', // Map 'assistant' to 'model' for Gemini API
+            parts: [{ text: msg.content }]
+          }));
+        
+        // Call Gemini API
+        geminiApi.sendMessage(userMessage, formattedHistory)
+          .then(response => {
+            setMessages(prev => {
+              const newMsgs = [...prev];
+              // Replace loading message with actual response
+              newMsgs[newMsgs.length - 1] = { 
+                role: 'assistant', 
+                content: response
+              };
+              return newMsgs;
+            });
+            
+            // Update chat history
+            setChatHistory(prev => [
+              ...prev,
+              { role: 'user', parts: [{ text: userMessage }] },
+              { role: 'model', parts: [{ text: response }] }
+            ]);
+          })
+          .catch(error => {
+            setMessages(prev => {
+              const newMsgs = [...prev];
+              // Replace loading message with error
+              newMsgs[newMsgs.length - 1] = { 
+                role: 'assistant', 
+                content: `Error: ${error.message}` 
+              };
+              return newMsgs;
+            });
           });
-        }, 1000);
       }
     } else if (key.backspace || key.delete) {
       setInputText(prev => prev.slice(0, -1));
