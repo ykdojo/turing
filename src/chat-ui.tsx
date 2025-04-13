@@ -93,7 +93,7 @@ export const ChatApp = () => {
       
       {/* Input prompt with cursor indicator */}
       <Box borderStyle="single" borderColor="gray" padding={1}>
-        <Text color="green">{`> ${inputText}`}<Text backgroundColor="green"> </Text></Text>
+        <Text>{`> ${inputText}`}<Text backgroundColor="white"> </Text></Text>
       </Box>
     </Box>
   );
