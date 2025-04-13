@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import Spinner from 'ink-spinner';
-import { getAIResponse } from './api.js';
+import { GeminiAPI } from './gemini-api.js';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -25,19 +25,53 @@ export const App = () => {
     // Add loading message immediately
     setMessages(prev => [...prev, { role: 'assistant', content: '', isLoading: true }]);
     
-    // Get AI response
-    getAIResponse(lastUserMessage)
-      .then(response => {
-        setMessages(prev => {
-          const newMessages = [...prev];
-          newMessages[newMessages.length - 1] = {
-            role: 'assistant',
-            content: response
-          };
-          return newMessages;
+    try {
+      // Create Gemini API instance and get response
+      const modelName = 'gemini-1.5-flash'; // Using Gemini 1.5 Flash model
+      const geminiApi = new GeminiAPI(modelName);
+      
+      // Convert messages to Gemini API history format
+      const history = initialMessages.slice(0, -1).map(msg => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      }));
+      
+      geminiApi.sendMessage(lastUserMessage, history)
+        .then(response => {
+          setMessages(prev => {
+            const newMessages = [...prev];
+            newMessages[newMessages.length - 1] = {
+              role: 'assistant',
+              content: response
+            };
+            return newMessages;
+          });
+          setIsComplete(true);
+        })
+        .catch(error => {
+          console.error('Error from Gemini API:', error);
+          setMessages(prev => {
+            const newMessages = [...prev];
+            newMessages[newMessages.length - 1] = {
+              role: 'assistant',
+              content: `Error: Could not get response from Gemini API. Make sure your GEMINI_API_KEY is set.`
+            };
+            return newMessages;
+          });
+          setIsComplete(true);
         });
-        setIsComplete(true);
+    } catch (error) {
+      console.error('Error initializing Gemini API:', error);
+      setMessages(prev => {
+        const newMessages = [...prev];
+        newMessages[newMessages.length - 1] = {
+          role: 'assistant',
+          content: `Error: Could not initialize Gemini API. Make sure your GEMINI_API_KEY is set.`
+        };
+        return newMessages;
       });
+      setIsComplete(true);
+    }
   }, []);
   
   return (

@@ -7,6 +7,11 @@ yarn-error.log*
 # Build output
 dist/
 
+# Compiled test files
+*-test.js
+*.test.js
+# But keep the TypeScript test source files
+
 # Editor and OS files
 .DS_Store
 .vscode/
