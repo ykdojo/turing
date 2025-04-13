@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import fs from 'node:fs';
 import mime from 'mime-types';
 
@@ -25,18 +25,54 @@ const defaultGenerationConfig = {
   responseMimeType: "text/plain",
 };
 
+// Terminal command tool declaration
+const terminalCommandTool = {
+  functionDeclarations: [
+    {
+      name: "runTerminalCommand",
+      description: "Run a terminal command on the user's system",
+      parameters: {
+        type: "object",
+        properties: {
+          command: {
+            type: "string",
+            description: "The terminal command to execute"
+          },
+          isSafe: {
+            type: "boolean",
+            description: "Whether the command is considered safe to run"
+          }
+        },
+        required: ["command", "isSafe"]
+      }
+    }
+  ]
+};
+
 // Class to handle Gemini API interactions
 export class GeminiAPI {
   private genAI: GoogleGenerativeAI;
   private model: any;
   private generationConfig: any;
+  private tools: any[];
+  private toolConfig: any;
 
   constructor(
     modelName: string, 
-    config = defaultGenerationConfig
+    config = defaultGenerationConfig,
+    enableFunctionCalling = false
   ) {
     this.genAI = new GoogleGenerativeAI(getApiKey());
-    this.model = this.genAI.getGenerativeModel({ model: modelName });
+    this.tools = enableFunctionCalling ? [terminalCommandTool] : [];
+    this.toolConfig = enableFunctionCalling ? {functionCallingConfig: {mode: "AUTO"}} : undefined;
+    
+    const modelOptions: any = { model: modelName };
+    if (enableFunctionCalling) {
+      modelOptions.tools = this.tools;
+      modelOptions.toolConfig = this.toolConfig;
+    }
+    
+    this.model = this.genAI.getGenerativeModel(modelOptions);
     this.generationConfig = config;
   }
 
@@ -50,8 +86,15 @@ export class GeminiAPI {
 
   // Process inline data from response (like images)
   processInlineData(result: any) {
+    // Skip processing if response structure is unexpected or missing
+    if (!result?.response?.candidates || !Array.isArray(result.response.candidates)) {
+      return;
+    }
+    
     const candidates = result.response.candidates;
     for (let candidate_index = 0; candidate_index < candidates.length; candidate_index++) {
+      if (!candidates[candidate_index]?.content?.parts) continue;
+      
       for (let part_index = 0; part_index < candidates[candidate_index].content.parts.length; part_index++) {
         const part = candidates[candidate_index].content.parts[part_index];
         if (part.inlineData) {
@@ -67,11 +110,48 @@ export class GeminiAPI {
     }
   }
 
+  // Process function calls from response
+  processFunctionCalls(result: any) {
+    const functionCalls: Array<{name: string; args: any}> = [];
+    
+    // Skip processing if response structure is unexpected or missing
+    if (!result?.response?.candidates || !Array.isArray(result.response.candidates)) {
+      return functionCalls;
+    }
+    
+    const candidates = result.response.candidates;
+    
+    for (const candidate of candidates) {
+      if (!candidate?.content?.parts) continue;
+      
+      for (const part of candidate.content.parts) {
+        if (part.functionCall) {
+          functionCalls.push({
+            name: part.functionCall.name,
+            args: part.functionCall.args
+          });
+        }
+      }
+    }
+    
+    return functionCalls;
+  }
+
   // Simple function to send a message and get a response
   async sendMessage(message: string, history: any[] = []) {
     const chatSession = this.startChat(history);
     const result = await chatSession.sendMessage(message);
     this.processInlineData(result);
+    
+    // Check for function calls
+    const functionCalls = this.processFunctionCalls(result);
+    if (functionCalls.length > 0) {
+      return {
+        text: result.response.text(),
+        functionCalls
+      };
+    }
+    
     return result.response.text();
   }
 }

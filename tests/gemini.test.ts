@@ -18,7 +18,7 @@ describe('Gemini API Tests', () => {
     );
     
     // Trim the response to handle any whitespace
-    const trimmedResponse = response.trim();
+    const trimmedResponse = typeof response === 'string' ? response.trim() : response.text.trim();
     
     // Test that the response is exactly our keyword
     expect(trimmedResponse).toBe(testKeyword);
@@ -67,5 +67,36 @@ describe('Gemini API Tests', () => {
     // Trim the response and check for exact match
     const response = result.response.text().trim();
     expect(response).toBe(historyKeyword);
+  });
+
+  test('API should handle function calling for terminal commands', async () => {
+    // Initialize with function calling enabled
+    const geminiWithFunctions = new GeminiAPI("gemini-2.5-pro-exp-03-25", undefined, true);
+    
+    // Request that should trigger the runTerminalCommand function
+    const response = await geminiWithFunctions.sendMessage(
+      "How can I list all files in my current directory?"
+    );
+    
+    // Verify that we got a function call response
+    expect(response).toHaveProperty('functionCalls');
+    
+    // Check that at least one function call was returned
+    const functionCalls = response.functionCalls;
+    expect(functionCalls.length).toBeGreaterThan(0);
+    
+    // Verify the first function call is for runTerminalCommand
+    const firstCall = functionCalls[0];
+    expect(firstCall.name).toBe('runTerminalCommand');
+    
+    // Verify the function call has the required arguments
+    expect(firstCall.args).toHaveProperty('command');
+    expect(firstCall.args).toHaveProperty('isSafe');
+    
+    // Command should be ls or similar
+    expect(firstCall.args.command.toLowerCase()).toMatch(/ls|dir/);
+    
+    // Safety check should be a boolean
+    expect(typeof firstCall.args.isSafe).toBe('boolean');
   });
 });

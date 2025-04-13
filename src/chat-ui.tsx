@@ -7,10 +7,17 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   isLoading?: boolean;
+  functionCalls?: Array<{
+    name: string;
+    args: {
+      command: string;
+      isSafe: boolean;
+    };
+  }>;
 }
 
-// Initialize Gemini API with a working model
-const geminiApi = new GeminiAPI('gemini-2.0-flash-thinking-exp-01-21');
+// Initialize Gemini API with a working model and function calling enabled
+const geminiApi = new GeminiAPI('gemini-2.5-pro-exp-03-25', undefined, true);
 
 export const ChatApp = () => {
   // Start with a completely empty chat history
@@ -57,22 +64,43 @@ export const ChatApp = () => {
         // Call Gemini API
         geminiApi.sendMessage(userMessage, formattedHistory)
           .then(response => {
-            setMessages(prev => {
-              const newMsgs = [...prev];
-              // Replace loading message with actual response
-              newMsgs[newMsgs.length - 1] = { 
-                role: 'assistant', 
-                content: response
-              };
-              return newMsgs;
-            });
-            
-            // Update chat history
-            setChatHistory(prev => [
-              ...prev,
-              { role: 'user', parts: [{ text: userMessage }] },
-              { role: 'model', parts: [{ text: response }] }
-            ]);
+            // Check if response has function calls
+            if (typeof response === 'object' && response.functionCalls) {
+              setMessages(prev => {
+                const newMsgs = [...prev];
+                // Replace loading message with response that includes function calls
+                newMsgs[newMsgs.length - 1] = { 
+                  role: 'assistant', 
+                  content: response.text,
+                  functionCalls: response.functionCalls
+                };
+                return newMsgs;
+              });
+              
+              // Update chat history with text response
+              setChatHistory(prev => [
+                ...prev,
+                { role: 'user', parts: [{ text: userMessage }] },
+                { role: 'model', parts: [{ text: response.text }] }
+              ]);
+            } else {
+              setMessages(prev => {
+                const newMsgs = [...prev];
+                // Replace loading message with regular text response
+                newMsgs[newMsgs.length - 1] = { 
+                  role: 'assistant', 
+                  content: response
+                };
+                return newMsgs;
+              });
+              
+              // Update chat history with text response
+              setChatHistory(prev => [
+                ...prev,
+                { role: 'user', parts: [{ text: userMessage }] },
+                { role: 'model', parts: [{ text: response }] }
+              ]);
+            }
           })
           .catch(error => {
             setMessages(prev => {
@@ -112,7 +140,30 @@ export const ChatApp = () => {
                   <Text> Thinking...</Text>
                 </Box>
               ) : (
-                <Text wrap="wrap">{message.content}</Text>
+                <Box flexDirection="column">
+                  <Text wrap="wrap">{message.content}</Text>
+                  
+                  {message.functionCalls && message.functionCalls.length > 0 && (
+                    <Box flexDirection="column" marginTop={1} borderStyle="round" borderColor="yellow" padding={1}>
+                      <Text bold color="yellow">Function Call:</Text>
+                      {message.functionCalls.map((call, idx) => (
+                        <Box key={idx} flexDirection="column" marginLeft={1}>
+                          <Text color="yellow">• {call.name}</Text>
+                          <Box marginLeft={2}>
+                            <Text color="cyan">Command: </Text>
+                            <Text>{call.args.command}</Text>
+                          </Box>
+                          <Box marginLeft={2}>
+                            <Text color="cyan">Safe: </Text>
+                            <Text color={call.args.isSafe ? "green" : "red"}>
+                              {call.args.isSafe ? "Yes" : "No"}
+                            </Text>
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
               )}
             </Box>
           </Box>
