@@ -32,7 +32,7 @@ export class GeminiAPI {
   private generationConfig: any;
 
   constructor(
-    modelName: string = "gemini-2.5-pro-exp-03-25", 
+    modelName: string, 
     config = defaultGenerationConfig
   ) {
     this.genAI = new GoogleGenerativeAI(getApiKey());
@@ -76,5 +76,4 @@ export class GeminiAPI {
   }
 }
 
-// Export a default instance for quick usage
-export const defaultGemini = new GeminiAPI();
+// No default instance exported - users must create instances with explicit model names
