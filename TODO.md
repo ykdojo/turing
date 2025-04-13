@@ -23,3 +23,6 @@
 
 ## Integration into Terminal UI
 - [ ] Refactor `api.ts` to support the model
+
+## Function Calling Support
+- [ ] Add function calling capabilities to Gemini API
