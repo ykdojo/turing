@@ -91,9 +91,9 @@ export const ChatApp = () => {
         ))}
       </Box>
       
-      {/* Input prompt - using simpler approach without nested Text components */}
+      {/* Input prompt with cursor indicator */}
       <Box borderStyle="single" borderColor="gray" padding={1}>
-        <Text color="green">{`> ${inputText}`}</Text>
+        <Text color="green">{`> ${inputText}`}<Text backgroundColor="green"> </Text></Text>
       </Box>
     </Box>
   );
