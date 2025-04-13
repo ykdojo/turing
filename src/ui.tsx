@@ -11,9 +11,9 @@ interface Message {
 
 export const App = () => {
   const initialMessages: Message[] = [
-    { role: 'user', content: 'Hello, can you help me with a coding problem?' },
-    { role: 'assistant', content: 'Of course! What coding problem are you facing?' },
-    { role: 'user', content: 'How do I create a React component?' },
+    { role: 'user', content: 'Hello' },
+    { role: 'assistant', content: 'Hello! How can I help you today?' },
+    { role: 'user', content: 'What model are you?' },
   ];
   
   const [messages, setMessages] = useState<Message[]>(initialMessages);
@@ -27,7 +27,7 @@ export const App = () => {
     
     try {
       // Create Gemini API instance and get response
-      const modelName = 'gemini-1.5-flash'; // Using Gemini 1.5 Flash model
+      const modelName = 'gemini-2.0-flash-thinking-exp-01-21'; // Using verified working model
       const geminiApi = new GeminiAPI(modelName);
       
       // Convert messages to Gemini API history format
