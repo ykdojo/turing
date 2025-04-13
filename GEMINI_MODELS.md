@@ -1,0 +1,14 @@
+# Gemini Model Names
+
+## Working Models (Verified)
+- `gemini-2.0-flash-thinking-exp-01-21` - Gemini 2.0 Flash with thinking capabilities
+- `gemini-2.5-pro-exp-03-25` - Gemini 2.5 Pro Experimental (free tier access)
+
+## Non-Working Models
+- `gemini-2.5-pro-preview-03-25` - No free quota tier available
+- `gemini-2.5.pro-exp-03-25` - Incorrect model name format (dot instead of hyphen)
+
+## Notes
+- For Gemini 2.5 Pro models, use the experimental versions (`-exp-`) for free tier access
+- Model names use hyphens, not dots, between version components
+- Model availability and naming may change over time (Last verified: 2025-04-12)
