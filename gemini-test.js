@@ -23,24 +23,28 @@ const history = [
 // Create a function to run the test
 async function runTest() {
   try {
-    console.log("Running Gemini API test...");
+    console.log("Running Gemini API connection test...");
     
-    // Test simple message without history
-    console.log("Testing without history:");
-    const response = await gemini.sendMessage("Tell me about the history of AI in 2-3 sentences.");
-    console.log(response);
+    // Exact response test for automated validation
+    const testKeyword = "GEMINI_TEST_1234";
+    const exactResponse = await gemini.sendMessage(
+      `Return ONLY the word ${testKeyword} with no punctuation, explanation, or other text.`
+    );
+    console.log(`Response: "${exactResponse}"`);
     
-    // Test with history (uncomment to test)
-    /*
-    console.log("\nTesting with conversation history:");
-    const chatSession = gemini.startChat(history);
-    const resultWithHistory = await chatSession.sendMessage("Tell me more about machine learning.");
-    console.log(resultWithHistory.response.text());
-    */
-    
-    console.log("\nTest completed successfully!");
+    // Validate the response programmatically
+    if (exactResponse.trim() === testKeyword) {
+      console.log("✅ TEST PASSED: Exact response matched expected output");
+      process.exitCode = 0; // Success for CI/CD pipelines
+    } else {
+      console.log("❌ TEST FAILED: Response did not match expected output");
+      console.log(`Expected: "${testKeyword}"`);
+      console.log(`Received: "${exactResponse}"`);
+      process.exitCode = 1; // Failure for CI/CD pipelines
+    }
   } catch (error) {
-    console.error("Error running test:", error);
+    console.error("❌ TEST FAILED: Error running test:", error);
+    process.exitCode = 1; // Failure for CI/CD pipelines
   }
 }
 
