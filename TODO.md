@@ -1,5 +1,13 @@
 # Turing AI Integration Todo List
 
+## Next Priority: Common API Interface
+- [ ] Create a unified API interface for multiple AI models
+  - [ ] Design an abstract base class that can be implemented by different model providers
+  - [ ] Move Gemini implementation to use this interface
+  - [ ] Create DeepSeek implementation using this interface
+  - [ ] Update chat UI to work with the common interface
+  - [ ] Add model selection capability
+
 ## Model Integration Testing
 - [ ] DeepSeek via Ollama (local)
   - [ ] Create test file for Ollama API integration
