@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
 import Spinner from 'ink-spinner';
 import { GeminiAPI } from './gemini-api.js';
+import { exec } from 'child_process';
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   isLoading?: boolean;
   functionCalls?: Array<{
@@ -13,6 +14,8 @@ interface Message {
       command: string;
       isSafe: boolean;
     };
+    result?: string;
+    executed?: boolean;
   }>;
 }
 
@@ -26,7 +29,59 @@ export const ChatApp = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputText, setInputText] = useState('');
   const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [pendingExecution, setPendingExecution] = useState<boolean>(false);
+  const [messageToExecute, setMessageToExecute] = useState<number | null>(null);
   const { exit } = useApp();
+  
+  // Function to execute a terminal command
+  const executeCommand = (command: string, messageIndex: number, callIndex: number) => {
+    // Mark as pending execution
+    setPendingExecution(true);
+    
+    exec(command, (error, stdout, stderr) => {
+      // Update the message with the command result
+      setMessages(prev => {
+        const newMsgs = [...prev];
+        if (newMsgs[messageIndex]?.functionCalls?.[callIndex]) {
+          newMsgs[messageIndex].functionCalls![callIndex].executed = true;
+          newMsgs[messageIndex].functionCalls![callIndex].result = error 
+            ? `Error: ${error.message}` 
+            : stderr 
+              ? `${stderr}` 
+              : stdout.trim() || 'Command executed successfully';
+        }
+        return newMsgs;
+      });
+      
+      // Add system message with the command result
+      const result = error 
+        ? `Error: ${error.message}` 
+        : stderr 
+          ? `${stderr}` 
+          : stdout.trim() || 'Command executed successfully';
+      
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'system',
+          content: `Command executed: ${command}\nResult: ${result}`
+        }
+      ]);
+      
+      // Update chat history
+      setChatHistory(prev => [
+        ...prev,
+        { 
+          role: 'system', 
+          parts: [{ text: `Command executed: ${command}\nResult: ${result}` }] 
+        }
+      ]);
+      
+      // Reset pending state
+      setPendingExecution(false);
+      setMessageToExecute(null);
+    });
+  };
   
   // Handle keyboard input
   useInput((input, key) => {
@@ -35,8 +90,30 @@ export const ChatApp = () => {
       return;
     }
     
+    // If there's a message with a safe command pending execution, execute it on Enter
     if (key.return) {
-      if (inputText.trim() !== '') {
+      // Check if we have any pending safe commands to execute
+      if (messageToExecute !== null) {
+        const msgIndex = messageToExecute;
+        // Reset the message to execute
+        setMessageToExecute(null);
+        
+        // Find the first safe and not executed command
+        const msg = messages[msgIndex];
+        if (msg?.functionCalls) {
+          const callIndex = msg.functionCalls.findIndex(call => 
+            call.args.isSafe && !call.executed);
+          
+          if (callIndex !== -1) {
+            const command = msg.functionCalls[callIndex].args.command;
+            executeCommand(command, msgIndex, callIndex);
+            return;
+          }
+        }
+      }
+      
+      // If no pending execution, process normal text input
+      if (!pendingExecution && inputText.trim() !== '') {
         // Add user message
         setMessages(prev => [
           ...prev, 
@@ -56,10 +133,16 @@ export const ChatApp = () => {
         // Format history for Gemini API
         const formattedHistory = messages
           .filter(msg => !msg.isLoading) // Filter out loading messages
-          .map(msg => ({
-            role: msg.role === 'assistant' ? 'model' : 'user', // Map 'assistant' to 'model' for Gemini API
-            parts: [{ text: msg.content }]
-          }));
+          .map(msg => {
+            if (msg.role === 'system') {
+              return { role: 'model', parts: [{ text: msg.content }] };
+            } else {
+              return {
+                role: msg.role === 'assistant' ? 'model' : 'user', 
+                parts: [{ text: msg.content }]
+              };
+            }
+          });
         
         // Call Gemini API
         geminiApi.sendMessage(userMessage, formattedHistory)
@@ -74,6 +157,10 @@ export const ChatApp = () => {
                   content: response.text,
                   functionCalls: response.functionCalls
                 };
+                
+                // Set the message index for potential execution
+                setMessageToExecute(newMsgs.length - 1);
+                
                 return newMsgs;
               });
               
@@ -159,6 +246,17 @@ export const ChatApp = () => {
                               {call.args.isSafe ? "Yes" : "No"}
                             </Text>
                           </Box>
+                          {call.executed && (
+                            <Box marginLeft={2} marginTop={1}>
+                              <Text color="cyan">Result: </Text>
+                              <Text>{call.result}</Text>
+                            </Box>
+                          )}
+                          {call.args.isSafe && !call.executed && (
+                            <Box marginLeft={2} marginTop={1}>
+                              <Text color="magenta">Press Enter to execute this command</Text>
+                            </Box>
+                          )}
                         </Box>
                       ))}
                     </Box>
