@@ -5,3 +5,4 @@
 - Always push (`git push`) after commits to ensure changes are saved to the remote repository
 - Run tests before committing any changes with `npm test`
 - Use `npm run test` to verify Gemini API functionality (tests pass with explicit model name requirement)
+- For Gemini function calling, always use mode "AUTO" (not "ANY") in the toolConfig

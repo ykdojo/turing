@@ -137,6 +137,45 @@ export class GeminiAPI {
     return functionCalls;
   }
 
+  // Send function call results back to the model
+  async sendFunctionResults(chatSession: any, functionName: string, result: string) {
+    try {
+      // Format the function response parts according to Gemini API requirements
+      const parts = [
+        {
+          functionResponse: {
+            name: functionName,
+            response: {
+              content: result
+            }
+          }
+        }
+      ];
+      
+      // Log the parts for debugging purposes
+      console.log('Sending function results to model:', JSON.stringify(parts, null, 2));
+      
+      // Send the result to the model
+      const response = await chatSession.sendMessage(parts);
+      
+      // Process the response for possible additional function calls
+      const functionCalls = this.processFunctionCalls(response);
+      if (functionCalls.length > 0) {
+        return {
+          text: response.response.text(),
+          functionCalls,
+          response: response // Return the raw response for potential further interactions
+        };
+      }
+      
+      return response.response.text();
+    } catch (error) {
+      console.error("Error sending function results:", error);
+      console.error(error instanceof Error ? error.stack : String(error));
+      return "Error processing function results.";
+    }
+  }
+
   // Simple function to send a message and get a response
   async sendMessage(message: string, history: any[] = []) {
     const chatSession = this.startChat(history);
@@ -148,7 +187,8 @@ export class GeminiAPI {
     if (functionCalls.length > 0) {
       return {
         text: result.response.text(),
-        functionCalls
+        functionCalls,
+        chatSession // Return the chat session for continuous interaction
       };
     }
     
