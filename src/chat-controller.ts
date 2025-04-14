@@ -106,12 +106,12 @@ export function useChatController() {
             return newMsgs;
           });
           
-          // Update chat history
+          // Update chat history - ensure we always have non-empty text
           setChatHistory(prev => [
             ...prev,
             {
               role: 'model',
-              parts: [{ text: response.text }]
+              parts: [{ text: response.text || "I'll process that for you." }]
             }
           ]);
           
@@ -137,12 +137,16 @@ export function useChatController() {
             return newMsgs;
           });
           
-          // Update chat history
+          // Update chat history - ensure we have non-empty text
           setChatHistory(prev => [
             ...prev,
             {
               role: 'model',
-              parts: [{ text: typeof response === 'string' ? response : response.text }]
+              parts: [{ 
+                text: typeof response === 'string' 
+                  ? (response || "I processed your request.") 
+                  : (response.text || "I processed your request.") 
+              }]
             }
           ]);
           
@@ -226,6 +230,13 @@ export function useChatController() {
         .map(msg => {
           if (msg.role === 'system') {
             return { role: 'model', parts: [{ text: msg.content }] };
+          } else if (msg.role === 'assistant' && msg.functionCalls && msg.functionCalls.length > 0) {
+            // For assistant messages with function calls, we need to make sure they have text content
+            // This prevents the "empty text parameter" error when sending a follow-up message
+            return {
+              role: 'model',
+              parts: [{ text: msg.content || "I'll process that for you." }]
+            };
           } else {
             return {
               role: msg.role === 'assistant' ? 'model' : 'user', 
@@ -233,6 +244,9 @@ export function useChatController() {
             };
           }
         });
+      
+      // Log the formatted history for debugging
+      console.log('Formatted history for API call:', JSON.stringify(formattedHistory, null, 2));
       
       // Call Gemini API
       geminiApi.sendMessage(userMessage, formattedHistory)
@@ -247,7 +261,7 @@ export function useChatController() {
               // Replace loading message with response that includes function calls
               newMsgs[newMsgs.length - 1] = { 
                 role: 'assistant', 
-                content: response.text,
+                content: response.text || "I'll process that for you.",
                 functionCalls: response.functionCalls,
                 chatSession: chatSession // Store it with the message for future use
               };
@@ -262,7 +276,7 @@ export function useChatController() {
             setChatHistory(prev => [
               ...prev,
               { role: 'user', parts: [{ text: userMessage }] },
-              { role: 'model', parts: [{ text: response.text }] }
+              { role: 'model', parts: [{ text: response.text || "I'll process that for you." }] }
             ]);
           } else {
             setMessages(prev => {

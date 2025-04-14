@@ -4,6 +4,32 @@
 import { GeminiAPI } from '../src/gemini-api.js';
 import { jest } from '@jest/globals';
 
+// Define types for mocking purposes to resolve TypeScript errors
+type MockResponse = {
+  response: {
+    text: () => string;
+    candidates?: Array<{
+      content: {
+        parts: Array<{
+          functionCall?: {
+            name: string;
+            args: {
+              command: string;
+              isSafe: boolean;
+            };
+          };
+          text?: string;
+        }>;
+      };
+    }>;
+  };
+};
+
+// Shape of GeminiAPI chat session response with sendMessage function
+type MockChatSession = {
+  sendMessage: jest.MockedFunction<(input: any) => Promise<MockResponse>>;
+};
+
 // Test the chat controller core functionality by directly using the GeminiAPI
 describe('Gemini Chat Functionality', () => {
   let gemini: GeminiAPI;
@@ -104,12 +130,12 @@ describe('Gemini Chat Functionality', () => {
 
   test('API should properly format and send function results', async () => {
     // Create a mock chat session with a sendMessage method
-    const mockChatSession = {
+    const mockChatSession: MockChatSession = {
       sendMessage: jest.fn().mockResolvedValue({
         response: {
           text: () => "I received your function result"
         }
-      })
+      } as MockResponse)
     };
 
     // Call the sendFunctionResults method
@@ -123,7 +149,14 @@ describe('Gemini Chat Functionality', () => {
     expect(mockChatSession.sendMessage).toHaveBeenCalledTimes(1);
     
     // Get the parts that were passed to sendMessage
-    const parts = mockChatSession.sendMessage.mock.calls[0][0];
+    const parts = mockChatSession.sendMessage.mock.calls[0][0] as Array<{
+      functionResponse: {
+        name: string;
+        response: {
+          content: string;
+        };
+      };
+    }>;
     
     // Verify the structure of the parts
     expect(parts).toHaveLength(1);
@@ -182,11 +215,11 @@ describe('Gemini Chat Functionality', () => {
     };
 
     // Setup mocked chat session
-    const mockChatSession = {
+    const mockChatSession: MockChatSession = {
       sendMessage: jest.fn()
-        .mockResolvedValueOnce(mockFirstResponse)  // Initial response with function call
-        .mockResolvedValueOnce(mockSecondResponse) // Response after first function result
-        .mockResolvedValueOnce(mockFinalResponse)  // Final response
+        .mockResolvedValueOnce(mockFirstResponse as MockResponse)  // Initial response with function call
+        .mockResolvedValueOnce(mockSecondResponse as MockResponse) // Response after first function result
+        .mockResolvedValueOnce(mockFinalResponse as MockResponse)  // Final response
     };
 
     // Mock the startChat method to return our mock session
@@ -228,5 +261,81 @@ describe('Gemini Chat Functionality', () => {
 
     // Verify final response is a simple text response
     expect(finalResponse).toBe("Final response with no more function calls");
+  });
+  
+  test('API should handle user message after function call response', async () => {
+    // Create a mock chat session for the function call flow
+    const mockFunctionResponse = {
+      response: {
+        text: () => "Command executed successfully",
+        candidates: [] // No more function calls
+      }
+    };
+
+    // Mock response for user's follow-up message
+    const mockUserFollowupResponse = {
+      response: {
+        text: () => "Here's my response to your follow-up message"
+      }
+    };
+
+    // Setup mocked chat session
+    const mockChatSession: MockChatSession = {
+      sendMessage: jest.fn()
+        .mockResolvedValueOnce(mockFunctionResponse as MockResponse)  // Response to function result
+        .mockResolvedValueOnce(mockUserFollowupResponse as MockResponse) // Response to follow-up user message
+    };
+
+    // Mock the startChat method to return our mock session
+    jest.spyOn(gemini, 'startChat').mockReturnValue(mockChatSession);
+    
+    // First, simulate sending function results
+    const functionResultResponse = await gemini.sendFunctionResults(
+      mockChatSession,
+      "runTerminalCommand",
+      "ls -la output"
+    );
+    
+    // Verify function result response
+    expect(functionResultResponse).toBe("Command executed successfully");
+    
+    // Create a formatted history that includes the function call and result
+    const history = [
+      { role: 'user', parts: [{ text: "Run ls command" }] },
+      { role: 'model', parts: [{ text: "I'll run that for you" }] },
+      { 
+        role: 'function', 
+        parts: [{ 
+          functionResponse: { 
+            name: "runTerminalCommand", 
+            response: { content: "ls -la output" } 
+          } 
+        }] 
+      },
+      { role: 'model', parts: [{ text: "Command executed successfully" }] }
+    ];
+    
+    // Now simulate sending a user follow-up message after the function call
+    const userMessage = "Analyze these results";
+    
+    // Create a new mock chat session for the follow-up
+    const mockFollowupChatSession: MockChatSession = {
+      sendMessage: jest.fn().mockResolvedValue(mockUserFollowupResponse as MockResponse)
+    };
+    
+    // Mock the startChat method again
+    jest.spyOn(gemini, 'startChat').mockReturnValue(mockFollowupChatSession);
+    
+    // Send the follow-up user message
+    const followupResponse = await gemini.sendMessage(userMessage, history);
+    
+    // Verify the response to the follow-up message
+    expect(followupResponse).toBe("Here's my response to your follow-up message");
+    
+    // Verify that startChat was called with the correct history
+    expect(gemini.startChat).toHaveBeenCalledWith(history);
+    
+    // Verify that sendMessage on the chat session was called with the user message
+    expect(mockFollowupChatSession.sendMessage).toHaveBeenCalledWith(userMessage);
   });
 });
