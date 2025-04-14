@@ -28,7 +28,6 @@ describe('Gemini Chat Functionality', () => {
     
     // Convert to Gemini format
     const formattedHistory = history
-      .filter(msg => !msg.isLoading)
       .map(msg => {
         if (msg.role === 'system') {
           return { role: 'model', parts: [{ text: msg.content }] };
