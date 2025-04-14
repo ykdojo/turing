@@ -1,22 +1,9 @@
 import { useState } from 'react';
 import { exec } from 'child_process';
 import { GeminiAPI } from './gemini-api.js';
+import { formatMessagesForGeminiAPI, Message as FormatterMessage } from './utils/message-formatter';
 
-export interface Message {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  isLoading?: boolean;
-  functionCalls?: Array<{
-    name: string;
-    args: {
-      command: string;
-      isSafe: boolean;
-    };
-    result?: string;
-    executed?: boolean;
-  }>;
-  chatSession?: any; // Store the chat session for continuous function calling
-}
+export type Message = FormatterMessage;
 
 // Initialize Gemini API with a working model and function calling enabled
 const geminiApi = new GeminiAPI('gemini-2.0-flash', undefined, true);
@@ -225,25 +212,7 @@ export function useChatController() {
       ]);
       
       // Format history for Gemini API
-      const formattedHistory = messages
-        .filter(msg => !msg.isLoading) // Filter out loading messages
-        .map(msg => {
-          if (msg.role === 'system') {
-            return { role: 'model', parts: [{ text: msg.content }] };
-          } else if (msg.role === 'assistant' && msg.functionCalls && msg.functionCalls.length > 0) {
-            // For assistant messages with function calls, we need to make sure they have text content
-            // This prevents the "empty text parameter" error when sending a follow-up message
-            return {
-              role: 'model',
-              parts: [{ text: msg.content || "I'll process that for you." }]
-            };
-          } else {
-            return {
-              role: msg.role === 'assistant' ? 'model' : 'user', 
-              parts: [{ text: msg.content }]
-            };
-          }
-        });
+      const formattedHistory = formatMessagesForGeminiAPI(messages);
       
       // Log the formatted history for debugging
       console.log('Formatted history for API call:', JSON.stringify(formattedHistory, null, 2));
