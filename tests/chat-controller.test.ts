@@ -46,4 +46,23 @@ describe('Gemini Chat Functionality', () => {
     expect(formattedHistory[2].role).toBe('model');
     expect(formattedHistory[0].parts[0].text).toBe('Hello');
   });
+  
+  test('API should have function calling configuration set correctly', () => {
+    // Create a GeminiAPI instance with function calling enabled
+    const geminiWithFunctions = new GeminiAPI('gemini-2.0-flash', undefined, true);
+    
+    // Check that the API has tools defined
+    // @ts-ignore - accessing private property for testing
+    expect(geminiWithFunctions.tools).toBeDefined();
+    // @ts-ignore - accessing private property for testing
+    expect(geminiWithFunctions.tools.length).toBeGreaterThan(0);
+    
+    // Check tool config mode is set to AUTO as specified in CLAUDE.md
+    // @ts-ignore - accessing private property for testing
+    expect(geminiWithFunctions.toolConfig).toBeDefined();
+    // @ts-ignore - accessing private property for testing
+    expect(geminiWithFunctions.toolConfig.functionCallingConfig).toBeDefined();
+    // @ts-ignore - accessing private property for testing
+    expect(geminiWithFunctions.toolConfig.functionCallingConfig.mode).toBe("AUTO");
+  });
 });
