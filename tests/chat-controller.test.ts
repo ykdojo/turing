@@ -65,4 +65,39 @@ describe('Gemini Chat Functionality', () => {
     // @ts-ignore - accessing private property for testing
     expect(geminiWithFunctions.toolConfig.functionCallingConfig.mode).toBe("AUTO");
   });
+
+  test('API should correctly process function calls from response', () => {
+    // Create a mock response with function calls
+    const mockResult = {
+      response: {
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  functionCall: {
+                    name: "runTerminalCommand",
+                    args: {
+                      command: "ls -la",
+                      isSafe: true
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    };
+    
+    // Process the mock response
+    // @ts-ignore - accessing private method for testing
+    const functionCalls = gemini.processFunctionCalls(mockResult);
+    
+    // Verify the processed function calls
+    expect(functionCalls.length).toBe(1);
+    expect(functionCalls[0].name).toBe("runTerminalCommand");
+    expect(functionCalls[0].args.command).toBe("ls -la");
+    expect(functionCalls[0].args.isSafe).toBe(true);
+  });
 });
