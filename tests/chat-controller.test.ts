@@ -134,4 +134,99 @@ describe('Gemini Chat Functionality', () => {
     // Verify the returned result
     expect(result).toBe("I received your function result");
   });
+
+  test('API should handle complete function call flow with chained function calls', async () => {
+    // Create mocks for nested function calls
+    const mockFirstResponse = {
+      response: {
+        text: () => "I'll list those files for you",
+        candidates: [{
+          content: {
+            parts: [{
+              functionCall: {
+                name: "runTerminalCommand",
+                args: {
+                  command: "ls -la",
+                  isSafe: true
+                }
+              }
+            }]
+          }
+        }]
+      }
+    };
+
+    const mockSecondResponse = {
+      response: {
+        text: () => "Here are the results from the command",
+        candidates: [{
+          content: {
+            parts: [{
+              functionCall: {
+                name: "runTerminalCommand",
+                args: {
+                  command: "cat file.txt",
+                  isSafe: true
+                }
+              }
+            }]
+          }
+        }]
+      }
+    };
+
+    const mockFinalResponse = {
+      response: {
+        text: () => "Final response with no more function calls"
+      }
+    };
+
+    // Setup mocked chat session
+    const mockChatSession = {
+      sendMessage: jest.fn()
+        .mockResolvedValueOnce(mockFirstResponse)  // Initial response with function call
+        .mockResolvedValueOnce(mockSecondResponse) // Response after first function result
+        .mockResolvedValueOnce(mockFinalResponse)  // Final response
+    };
+
+    // Mock the startChat method to return our mock session
+    jest.spyOn(gemini, 'startChat').mockReturnValue(mockChatSession);
+
+    // Call sendMessage to start the flow
+    const response = await gemini.sendMessage("List my files", []);
+
+    // Verify that the response contains function calls
+    expect(typeof response).toBe('object');
+    expect(response.text).toBe("I'll list those files for you");
+    expect(response.functionCalls).toBeDefined();
+    expect(response.functionCalls.length).toBe(1);
+    expect(response.functionCalls[0].name).toBe("runTerminalCommand");
+    expect(response.functionCalls[0].args.command).toBe("ls -la");
+    expect(response.chatSession).toBe(mockChatSession);
+
+    // Now simulate sending function results back
+    const secondResponse = await gemini.sendFunctionResults(
+      mockChatSession,
+      "runTerminalCommand",
+      "file1.txt\nfile2.txt\nfile3.txt"
+    );
+
+    // Verify second response structure
+    expect(typeof secondResponse).toBe('object');
+    expect(secondResponse.text).toBe("Here are the results from the command");
+    expect(secondResponse.functionCalls).toBeDefined();
+    expect(secondResponse.functionCalls.length).toBe(1);
+    expect(secondResponse.functionCalls[0].name).toBe("runTerminalCommand");
+    expect(secondResponse.functionCalls[0].args.command).toBe("cat file.txt");
+
+    // Finally, send the last function result
+    const finalResponse = await gemini.sendFunctionResults(
+      mockChatSession,
+      "runTerminalCommand",
+      "Contents of file.txt"
+    );
+
+    // Verify final response is a simple text response
+    expect(finalResponse).toBe("Final response with no more function calls");
+  });
 });
