@@ -152,8 +152,6 @@ export class GeminiAPI {
         }
       ];
       
-      // Log the parts for debugging purposes
-      console.log('Sending function results to model:', JSON.stringify(parts, null, 2));
       
       // Send the result to the model
       const response = await chatSession.sendMessage(parts);

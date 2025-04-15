@@ -214,8 +214,6 @@ export function useChatController() {
       // Format history for Gemini API
       const formattedHistory = formatMessagesForGeminiAPI(messages);
       
-      // Log the formatted history for debugging
-      console.log('Formatted history for API call:', JSON.stringify(formattedHistory, null, 2));
       
       // Call Gemini API
       geminiApi.sendMessage(userMessage, formattedHistory)
