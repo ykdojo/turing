@@ -93,6 +93,129 @@ describe('Gemini Function Calling Tests', () => {
       throw error;
     }
   });
+  
+  test('should test terminal command function calling with the production model', async () => {
+    // Skip if running CI (API key might not be available)
+    if (process.env.CI) {
+      console.log('Skipping API test in CI environment');
+      return;
+    }
+    
+    // Get the model used in the actual chat controller (gemini-2.5-pro-exp-03-25)
+    const productionModel = 'gemini-2.5-pro-exp-03-25';
+    
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+    });
+    
+    // Use the terminal command tool as defined in our implementation
+    const terminalCommandTool = {
+      functionDeclarations: [
+        {
+          name: "runTerminalCommand",
+          description: "Run a terminal command on the user's system",
+          parameters: {
+            type: "object",
+            properties: {
+              command: {
+                type: "string",
+                description: "The terminal command to execute"
+              },
+              isSafe: {
+                type: "boolean",
+                description: "Whether the command is considered safe to run"
+              }
+            },
+            required: ["command", "isSafe"]
+          }
+        }
+      ]
+    };
+    
+    const config = {
+      tools: [terminalCommandTool],
+      responseMimeType: 'text/plain',
+      toolConfig: {
+        functionCallingConfig: {
+          mode: "AUTO"  // Always use "AUTO" mode per CLAUDE.md instructions
+        }
+      },
+      systemInstruction: {
+        parts: [
+          {
+            text: `You are a helpful terminal assistant in the Turing application. You can run terminal commands for the user when appropriate. Only suggest running terminal commands when they are safe and necessary. Provide clear explanations about what commands will do before executing them. Focus on being helpful, concise, and security-conscious.`
+          }
+        ]
+      }
+    };
+    
+    const contents = [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: `Try running an LS command in the current directory using period and summarize the result. It is safe to run.`,
+          },
+        ],
+      }
+    ];
+
+    try {
+      // Make a direct API call
+      const response = await ai.models.generateContent({
+        model: productionModel,
+        config,
+        contents,
+      });
+      
+      console.log("Production model test response:");
+      console.log(JSON.stringify(response, null, 2));
+      
+      // Check for function calls
+      let foundFunctionCall = false;
+      
+      if (response.candidates && response.candidates.length > 0) {
+        const candidate = response.candidates[0];
+        if (candidate.content && candidate.content.parts) {
+          for (const part of candidate.content.parts) {
+            if (part.functionCall) {
+              foundFunctionCall = true;
+              
+              // Verify function call details
+              expect(part.functionCall.name).toBe('runTerminalCommand');
+              expect(part.functionCall.args).toHaveProperty('command');
+              expect(part.functionCall.args).toHaveProperty('isSafe');
+              
+              // The command should be ls . or similar
+              expect(part.functionCall.args.command.toLowerCase().includes('ls')).toBe(true);
+              
+              // It should be marked as safe
+              expect(part.functionCall.args.isSafe).toBe(true);
+            }
+          }
+        }
+      }
+      
+      // We should find at least one function call
+      expect(foundFunctionCall).toBe(true);
+    } catch (error) {
+      console.error("Production model API test failed:", error);
+      console.error("Error details:", error instanceof Error ? error.message : String(error));
+      console.error("Stack trace:", error instanceof Error ? error.stack : "No stack trace");
+      // Mark the test as inconclusive rather than failing if it's likely an API limit issue
+      if (error.message && (
+          error.message.includes('quota') || 
+          error.message.includes('rate limit') || 
+          error.message.includes('429') ||
+          error.message.includes('invalid_grant')
+      )) {
+        console.warn("Test skipped due to apparent API limits - consider this inconclusive rather than a failure");
+        return;
+      }
+      // Re-throw for other errors
+      throw error;
+    }
+  });
 
   test('should handle basic function calling setup with custom tool', async () => {
     // Initialize the Gemini API with function calling enabled and use model from GEMINI_MODELS.md
