@@ -60,7 +60,8 @@ export class GeminiAPI {
   constructor(
     modelName: string, 
     config = defaultGenerationConfig,
-    enableFunctionCalling = false
+    enableFunctionCalling = false,
+    systemInstruction?: string
   ) {
     this.genAI = new GoogleGenerativeAI(getApiKey());
     this.tools = enableFunctionCalling ? [terminalCommandTool] : [];
@@ -70,6 +71,10 @@ export class GeminiAPI {
     if (enableFunctionCalling) {
       modelOptions.tools = this.tools;
       modelOptions.toolConfig = this.toolConfig;
+    }
+    
+    if (systemInstruction) {
+      modelOptions.systemInstruction = [{ text: systemInstruction }];
     }
     
     this.model = this.genAI.getGenerativeModel(modelOptions);

@@ -102,4 +102,30 @@ describe('Gemini API Tests', () => {
     // Just verify we get some kind of response
     expect(response).toBeDefined();
   });
+  
+  test('API should support system instruction configuration', async () => {
+    // Define test system instruction
+    const testInstruction = "You are a helpful terminal assistant in the Turing application. You can run terminal commands for the user when appropriate. Only suggest running terminal commands when they are safe and necessary. Provide clear explanations about what commands will do before executing them. Focus on being helpful, concise, and security-conscious.";
+    
+    // Initialize with system instruction
+    const geminiWithSystemInstruction = new GeminiAPI(
+      "gemini-2.0-flash", 
+      undefined, 
+      true, 
+      testInstruction
+    );
+    
+    // For testing purposes, we can't directly access or verify the system instruction
+    // in the model configuration. We can only test that the API still functions.
+    
+    // Try sending a message with the system-instructed model
+    // This won't definitively verify the system instruction's effect,
+    // but ensures basic functionality still works with system instruction
+    const response = await geminiWithSystemInstruction.sendMessage(
+      "What terminal command would safely show the current directory?"
+    );
+    
+    // Just verify we get some kind of response
+    expect(response).toBeDefined();
+  });
 });

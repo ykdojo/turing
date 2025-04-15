@@ -5,8 +5,11 @@ import { formatMessagesForGeminiAPI, Message as FormatterMessage } from './utils
 
 export type Message = FormatterMessage;
 
-// Initialize Gemini API with a working model and function calling enabled
-const geminiApi = new GeminiAPI('gemini-2.0-flash', undefined, true);
+// System instruction for the Turing terminal assistant
+const SYSTEM_INSTRUCTION = "You are a helpful terminal assistant in the Turing application. You can run terminal commands for the user when appropriate. Only suggest running terminal commands when they are safe and necessary. Provide clear explanations about what commands will do before executing them. Focus on being helpful, concise, and security-conscious.";
+
+// Initialize Gemini API with a working model, function calling enabled, and system instruction
+const geminiApi = new GeminiAPI('gemini-2.0-flash', undefined, true, SYSTEM_INSTRUCTION);
 
 export function useChatController() {
   // Start with a completely empty chat history
