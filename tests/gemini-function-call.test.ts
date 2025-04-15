@@ -8,6 +8,92 @@ import { GeminiAPI } from '../src/gemini-api';
 
 describe('Gemini Function Calling Tests', () => {
   
+  test('should make a direct function call request to Gemini Flash with minimal conversation', async () => {
+    // Skip if running CI (API key might not be available)
+    if (process.env.CI) {
+      console.log('Skipping API test in CI environment');
+      return;
+    }
+    
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+    });
+    
+    const tools = [
+      {
+        functionDeclarations: [
+          {
+            name: 'getWeather',
+            description: 'gets the weather for a requested city',
+            parameters: {
+              type: Type.OBJECT,
+              properties: {
+                city: {
+                  type: Type.STRING,
+                },
+              },
+              required: ['city']
+            },
+          },
+        ],
+      }
+    ];
+    
+    const config = {
+      tools,
+      responseMimeType: 'text/plain',
+      toolConfig: {
+        functionCallingConfig: {
+          mode: "AUTO"  // Always use "AUTO" mode per CLAUDE.md instructions
+        }
+      }
+    };
+    
+    const model = 'gemini-2.0-flash';
+    const contents = [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: `What's the weather like in Vancouver?`,
+          },
+        ],
+      }
+    ];
+
+    try {
+      // Make a direct API call using the stream API
+      const response = await ai.models.generateContentStream({
+        model,
+        config,
+        contents,
+      });
+      
+      let functionCallDetected = false;
+      
+      for await (const chunk of response) {
+        if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+          functionCallDetected = true;
+          const functionCall = chunk.functionCalls[0];
+          
+          // Verify the function call was for getWeather
+          expect(functionCall.name).toBe('getWeather');
+          
+          // Verify the city parameter is present
+          expect(functionCall.args).toHaveProperty('city');
+          expect(functionCall.args.city.toLowerCase()).toBe('vancouver');
+        }
+      }
+      
+      // Verify that we detected a function call
+      expect(functionCallDetected).toBe(true);
+    } catch (error) {
+      console.error("Direct API test failed:", error);
+      // Re-throw to fail the test
+      throw error;
+    }
+  });
+
   test('should handle basic function calling setup with custom tool', async () => {
     // Initialize the Gemini API with function calling enabled and use model from GEMINI_MODELS.md
     const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
