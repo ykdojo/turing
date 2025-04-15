@@ -8,8 +8,11 @@ export type Message = FormatterMessage;
 // System instruction for the Turing terminal assistant
 const SYSTEM_INSTRUCTION = `You are a helpful terminal assistant in the Turing application, working in the directory: ${process.cwd()}. You can run terminal commands for the user when appropriate. Only suggest running terminal commands when they are safe and necessary. Provide clear explanations about what commands will do before executing them. Focus on being helpful, concise, and security-conscious.`;
 
-// Initialize Gemini API with a working model, function calling enabled, and system instruction
-const geminiApi = new GeminiAPI('gemini-2.5-pro-exp-03-25', undefined, true, SYSTEM_INSTRUCTION);
+// Get model from environment or use default (flash for speed, pro for capabilities)
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+
+// Initialize Gemini API with configured model, function calling enabled, and system instruction
+const geminiApi = new GeminiAPI(MODEL, undefined, true, SYSTEM_INSTRUCTION);
 
 export function useChatController() {
   // Start with a completely empty chat history
