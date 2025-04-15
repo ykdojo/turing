@@ -101,8 +101,8 @@ describe('Gemini Function Calling Tests', () => {
       return;
     }
     
-    // Get the model used in the actual chat controller (gemini-2.5-pro-exp-03-25)
-    const productionModel = 'gemini-2.5-pro-exp-03-25';
+    // Get the model used in the actual chat controller
+    const productionModel = 'gemini-2.0-flash';
     
     const ai = new GoogleGenAI({
       apiKey: process.env.GEMINI_API_KEY,
