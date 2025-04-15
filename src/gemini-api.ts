@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import fs from 'node:fs';
 import mime from 'mime-types';
 
@@ -51,11 +51,12 @@ const terminalCommandTool = {
 
 // Class to handle Gemini API interactions
 export class GeminiAPI {
-  private genAI: GoogleGenerativeAI;
-  private model: any;
+  private genAI: GoogleGenAI;
+  private modelName: string;
   private generationConfig: any;
   private tools: any[];
   private toolConfig: any;
+  private systemInstruction: {text: string}[] | undefined;
 
   constructor(
     modelName: string, 
@@ -63,40 +64,100 @@ export class GeminiAPI {
     enableFunctionCalling = false,
     systemInstruction?: string
   ) {
-    this.genAI = new GoogleGenerativeAI(getApiKey());
+    this.genAI = new GoogleGenAI({
+      apiKey: getApiKey()
+    });
+    
+    this.modelName = modelName;
     this.tools = enableFunctionCalling ? [terminalCommandTool] : [];
     this.toolConfig = enableFunctionCalling ? {functionCallingConfig: {mode: "AUTO"}} : undefined;
-    
-    const modelOptions: any = { model: modelName };
-    if (enableFunctionCalling) {
-      modelOptions.tools = this.tools;
-      modelOptions.toolConfig = this.toolConfig;
-    }
-    
-    if (systemInstruction) {
-      modelOptions.systemInstruction = [{ text: systemInstruction }];
-    }
-    
-    this.model = this.genAI.getGenerativeModel(modelOptions);
+    this.systemInstruction = systemInstruction ? [{text: systemInstruction}] : undefined;
     this.generationConfig = config;
   }
 
   // Start a chat session
   startChat(history: any[] = []) {
-    return this.model.startChat({
-      generationConfig: this.generationConfig,
+    const chat = {
       history,
-    });
+      sendMessage: async (message: string | any[]) => {
+        let contents;
+        
+        if (typeof message === 'string') {
+          contents = [
+            {
+              role: 'user',
+              parts: [{ text: message }]
+            }
+          ];
+        } else {
+          contents = [
+            {
+              role: 'user',
+              parts: message
+            }
+          ];
+        }
+        
+        // Include history if available
+        if (history.length > 0) {
+          contents = [...history, ...contents];
+        }
+
+        const options: any = {
+          model: this.modelName,
+          config: this.generationConfig,
+          contents,
+        };
+        
+        if (this.tools.length > 0) {
+          options.tools = this.tools;
+          options.toolConfig = this.toolConfig;
+        }
+        
+        if (this.systemInstruction) {
+          options.config = {
+            ...options.config,
+            systemInstruction: this.systemInstruction,
+          };
+        }
+        
+        const response = await this.genAI.models.generateContent(options);
+        
+        // Update history with the new messages
+        history.push(contents[contents.length - 1]);
+        if (response.candidates?.[0]?.content) {
+          history.push(response.candidates[0].content);
+        }
+        
+        // Add response.text() method for backward compatibility
+        response.response = {
+          text: () => {
+            if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
+              return response.candidates[0].content.parts[0].text;
+            }
+            return '';
+          }
+        };
+        
+        return response;
+      }
+    };
+    
+    return chat;
   }
 
   // Process inline data from response (like images)
   processInlineData(result: any) {
     // Skip processing if response structure is unexpected or missing
-    if (!result?.response?.candidates || !Array.isArray(result.response.candidates)) {
+    if (!result?.candidates && !result?.response?.candidates) {
       return;
     }
     
-    const candidates = result.response.candidates;
+    const candidates = result.candidates || result.response.candidates;
+    if (!Array.isArray(candidates)) {
+      return;
+    }
+    
     for (let candidate_index = 0; candidate_index < candidates.length; candidate_index++) {
       if (!candidates[candidate_index]?.content?.parts) continue;
       
@@ -120,11 +181,14 @@ export class GeminiAPI {
     const functionCalls: Array<{name: string; args: any}> = [];
     
     // Skip processing if response structure is unexpected or missing
-    if (!result?.response?.candidates || !Array.isArray(result.response.candidates)) {
+    if (!result?.candidates && !result?.response?.candidates) {
       return functionCalls;
     }
     
-    const candidates = result.response.candidates;
+    const candidates = result.candidates || result.response.candidates;
+    if (!Array.isArray(candidates)) {
+      return functionCalls;
+    }
     
     for (const candidate of candidates) {
       if (!candidate?.content?.parts) continue;
@@ -156,7 +220,6 @@ export class GeminiAPI {
           }
         }
       ];
-      
       
       // Send the result to the model
       const response = await chatSession.sendMessage(parts);
