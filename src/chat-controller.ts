@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { exec } from 'child_process';
 import { GeminiAPI } from './gemini-api.js';
-import { formatMessagesForGeminiAPI, Message as FormatterMessage } from './utils/message-formatter';
+import { formatMessagesForGeminiAPI, Message as FormatterMessage } from './utils/message-formatter.js';
 
 export type Message = FormatterMessage;
 
@@ -181,7 +181,7 @@ export function useChatController() {
       // Find the first safe and not executed command
       const msg = messages[msgIndex];
       if (msg?.functionCalls) {
-        const callIndex = msg.functionCalls.findIndex(call => 
+        const callIndex = msg.functionCalls.findIndex((call) => 
           call.args.isSafe && !call.executed);
         
         if (callIndex !== -1) {
