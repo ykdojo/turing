@@ -56,7 +56,7 @@ export class GeminiAPI {
   private generationConfig: any;
   private tools: any[];
   private toolConfig: any;
-  private systemInstruction: {text: string}[] | undefined;
+  private systemInstruction: string | undefined;
 
   constructor(
     modelName: string, 
@@ -71,8 +71,11 @@ export class GeminiAPI {
     this.modelName = modelName;
     this.tools = enableFunctionCalling ? [terminalCommandTool] : [];
     this.toolConfig = enableFunctionCalling ? {functionCallingConfig: {mode: "AUTO"}} : undefined;
-    this.systemInstruction = systemInstruction ? [{text: systemInstruction}] : undefined;
-    this.generationConfig = config;
+    this.systemInstruction = systemInstruction ? systemInstruction : undefined;
+    this.generationConfig = {
+      ...config,
+      responseMimeType: 'text/plain'  // Always use text/plain for consistent response handling
+    };
   }
 
   // Start a chat session
@@ -105,22 +108,35 @@ export class GeminiAPI {
 
         const options: any = {
           model: this.modelName,
-          config: this.generationConfig,
+          config: {
+            ...this.generationConfig,
+            responseMimeType: 'text/plain'  // Ensure consistent MIME type
+          },
           contents,
         };
         
         if (this.tools.length > 0) {
           options.tools = this.tools;
           options.toolConfig = this.toolConfig;
+          
+          // Ensure we're setting the right properties for function calling
+          if (!options.config) options.config = {};
+          options.config.tools = this.tools;
+          options.config.toolConfig = this.toolConfig;
         }
         
         if (this.systemInstruction) {
           options.config = {
             ...options.config,
-            systemInstruction: this.systemInstruction,
+            systemInstruction: {
+              parts: [{ text: Array.isArray(this.systemInstruction) ? 
+                this.systemInstruction[0].text : this.systemInstruction }]
+            }
           };
         }
         
+        // For consistent function calling, always use direct generateContent
+        // instead of wrapping in startChat
         const response = await this.genAI.models.generateContent(options);
         
         // Update history with the new messages

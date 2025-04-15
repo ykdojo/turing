@@ -167,6 +167,116 @@ describe('Gemini Chat Functionality', () => {
     // Verify the returned result
     expect(result).toBe("I received your function result");
   });
+  
+  test('API should correctly handle real function calling with terminal commands', async () => {
+    // Skip if running CI (API key might not be available)
+    if (process.env.CI) {
+      console.log('Skipping API test in CI environment');
+      return;
+    }
+    
+    // Initialize with the same model used in chat-controller.ts
+    const gemini = new GeminiAPI('gemini-2.5-pro-exp-03-25', undefined, true, 
+      `You are a helpful terminal assistant, working in the directory: ${process.cwd()}. You can run terminal commands for the user when appropriate.`);
+    
+    try {
+      // Print current tool configuration for debugging
+      console.log("Tool configuration:");
+      console.log(JSON.stringify(gemini['toolConfig'], null, 2));
+      console.log("Tools defined:");
+      console.log(JSON.stringify(gemini['tools'], null, 2));
+      
+      // Send a prompt that should trigger function calling with more explicit instructions
+      const prompt = "I need you to execute the 'ls .' terminal command. DO NOT just explain it or describe it - use the runTerminalCommand function to run it.";
+      console.log("Sending prompt:", prompt);
+      const response = await gemini.sendMessage(prompt);
+      
+      // Log the full response to debug
+      console.log("Raw response type:", typeof response);
+      if (typeof response === 'string') {
+        console.log("Text response received instead of function call:");
+        console.log(response);
+        
+        // Test passes if we get string or object, but we log the issue
+        console.warn("NOTE: Model returned text instead of function call - this is the hallucination issue");
+      } else {
+        console.log("Function call response:");
+        console.log(JSON.stringify(response, null, 2));
+        
+        // Verify we got a proper response structure for function calls
+        expect(response.text).toBeDefined();
+        expect(response.functionCalls).toBeDefined();
+        expect(Array.isArray(response.functionCalls)).toBe(true);
+        
+        if (response.functionCalls && response.functionCalls.length > 0) {
+          // Verify the function call details
+          const functionCall = response.functionCalls[0];
+          expect(functionCall.name).toBe('runTerminalCommand');
+          expect(functionCall.args).toBeDefined();
+          expect(functionCall.args.command).toBeDefined();
+          expect(functionCall.args.isSafe).toBeDefined();
+          
+          // Check that isSafe is a boolean
+          expect(typeof functionCall.args.isSafe).toBe('boolean');
+        } else {
+          console.warn("Function calls array exists but is empty - partial hallucination");
+        }
+      }
+      
+      // Test passes either way - we're just diagnosing
+    } catch (error) {
+      console.error("API test error:", error);
+      throw error;
+    }
+  });
+  
+  test('Compare function calling behavior between different models', async () => {
+    // Skip if running CI (API key might not be available)
+    if (process.env.CI) {
+      console.log('Skipping API test in CI environment');
+      return;
+    }
+    
+    // Test both models with same configuration and prompt
+    const modelNames = ['gemini-2.0-flash', 'gemini-2.5-pro-exp-03-25'];
+    const systemInstruction = `You are a helpful terminal assistant, working in the directory: ${process.cwd()}. You can run terminal commands for the user when appropriate.`;
+    const prompt = "Execute the 'ls .' terminal command.";
+    
+    console.log("=== Testing function calling with different models ===");
+    
+    for (const modelName of modelNames) {
+      console.log(`\n--- TESTING MODEL: ${modelName} ---`);
+      
+      // Initialize API with function calling enabled
+      const api = new GeminiAPI(modelName, undefined, true, systemInstruction);
+      
+      try {
+        // Send identical prompt to both models
+        const response = await api.sendMessage(prompt);
+        
+        console.log(`Model ${modelName} response type:`, typeof response);
+        
+        if (typeof response === 'string') {
+          console.log("Text response received:");
+          console.log(response.substring(0, 200) + (response.length > 200 ? '...' : ''));
+          console.warn("NOTE: Model returned text instead of function call");
+        } else {
+          console.log("Function call response detected:");
+          if (response.functionCalls && response.functionCalls.length > 0) {
+            console.log(`Function name: ${response.functionCalls[0].name}`);
+            console.log(`Command: ${response.functionCalls[0].args.command}`);
+            console.log(`isSafe: ${response.functionCalls[0].args.isSafe}`);
+          } else {
+            console.warn("Function calls array exists but is empty");
+          }
+        }
+      } catch (error) {
+        console.error(`Error with model ${modelName}:`, error.message);
+      }
+    }
+    
+    // Not verifying results - this is exploratory to compare models
+  });
 
   test('API should handle complete function call flow with chained function calls', async () => {
     // Create mocks for nested function calls
