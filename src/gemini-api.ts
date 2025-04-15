@@ -2,6 +2,7 @@ import { config } from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import fs from 'node:fs';
 import mime from 'mime-types';
+import { getAvailableTools, terminalCommandTool } from './tools';
 
 // Initialize environment variables
 config();
@@ -25,30 +26,6 @@ const defaultGenerationConfig = {
   responseMimeType: "text/plain",
 };
 
-// Terminal command tool declaration
-const terminalCommandTool = {
-  functionDeclarations: [
-    {
-      name: "runTerminalCommand",
-      description: "Run a terminal command on the user's system",
-      parameters: {
-        type: "object",
-        properties: {
-          command: {
-            type: "string",
-            description: "The terminal command to execute"
-          },
-          isSafe: {
-            type: "boolean",
-            description: "Whether the command is considered safe to run"
-          }
-        },
-        required: ["command", "isSafe"]
-      }
-    }
-  ]
-};
-
 // Class to handle Gemini API interactions
 export class GeminiAPI {
   private genAI: GoogleGenAI;
@@ -69,7 +46,7 @@ export class GeminiAPI {
     });
     
     this.modelName = modelName;
-    this.tools = enableFunctionCalling ? [terminalCommandTool] : [];
+    this.tools = enableFunctionCalling ? getAvailableTools() : [];
     this.toolConfig = enableFunctionCalling ? {functionCallingConfig: {mode: "AUTO"}} : undefined;
     this.systemInstruction = systemInstruction ? systemInstruction : undefined;
     this.generationConfig = {

@@ -176,7 +176,7 @@ describe('Gemini Chat Functionality', () => {
     }
     
     // Initialize with the same model used in chat-controller.ts
-    const gemini = new GeminiAPI('gemini-2.5-pro-exp-03-25', undefined, true, 
+    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true, 
       `You are a helpful terminal assistant, working in the directory: ${process.cwd()}. You can run terminal commands for the user when appropriate.`);
     
     try {
@@ -237,21 +237,19 @@ describe('Gemini Chat Functionality', () => {
       return;
     }
     
-    // Test both models with same configuration and prompt
-    const modelNames = ['gemini-2.0-flash', 'gemini-2.5-pro-exp-03-25'];
+    // Test with the flash model
+    const modelName = 'gemini-2.0-flash';
     const systemInstruction = `You are a helpful terminal assistant, working in the directory: ${process.cwd()}. You can run terminal commands for the user when appropriate.`;
     const prompt = "Execute the 'ls .' terminal command.";
     
-    console.log("=== Testing function calling with different models ===");
+    console.log("=== Testing function calling with flash model ===");
+    console.log(`\n--- TESTING MODEL: ${modelName} ---`);
     
-    for (const modelName of modelNames) {
-      console.log(`\n--- TESTING MODEL: ${modelName} ---`);
-      
-      // Initialize API with function calling enabled
-      const api = new GeminiAPI(modelName, undefined, true, systemInstruction);
+    // Initialize API with function calling enabled
+    const api = new GeminiAPI(modelName, undefined, true, systemInstruction);
       
       try {
-        // Send identical prompt to both models
+        // Send prompt to flash model
         const response = await api.sendMessage(prompt);
         
         console.log(`Model ${modelName} response type:`, typeof response);
@@ -273,9 +271,8 @@ describe('Gemini Chat Functionality', () => {
       } catch (error) {
         console.error(`Error with model ${modelName}:`, error.message);
       }
-    }
     
-    // Not verifying results - this is exploratory to compare models
+    // Not verifying results - this is exploratory
   });
 
   test('API should handle complete function call flow with chained function calls', async () => {
