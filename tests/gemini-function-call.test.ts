@@ -289,4 +289,76 @@ describe('Gemini Function Calling Tests', () => {
       expect(error.message).toContain('Invalid JSON');
     }
   });
+  
+  test('should allow custom function declarations with GeminiAPI', async () => {
+    // Create a custom weather function tool for this test
+    const weatherTool = {
+      functionDeclarations: [
+        {
+          name: "getWeather",
+          description: "Gets the weather for a specified city",
+          parameters: {
+            type: "object",
+            properties: {
+              city: {
+                type: "string",
+                description: "The city to get weather for"
+              }
+            },
+            required: ["city"]
+          }
+        }
+      ]
+    };
+    
+    // Create a custom GeminiAPI instance with function calling enabled
+    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
+    
+    // Replace the default terminal command tool with our weather tool
+    gemini['tools'] = [weatherTool];
+    
+    // Verify the weather tool is set correctly
+    expect(gemini['tools']).toEqual([weatherTool]);
+    
+    // Verify the toolConfig is set correctly
+    expect(gemini['toolConfig']).toEqual({functionCallingConfig: {mode: "AUTO"}});
+    
+    // Verify the function declarations
+    expect(gemini['tools'][0].functionDeclarations[0].name).toBe('getWeather');
+    expect(gemini['tools'][0].functionDeclarations[0].parameters.properties).toHaveProperty('city');
+    expect(gemini['tools'][0].functionDeclarations[0].parameters.required).toContain('city');
+  });
+  
+  test('should detect and process function calls correctly', async () => {
+    // Create a GeminiAPI instance
+    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
+    
+    // Create a mock response with a function call
+    const mockResponse = {
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                functionCall: {
+                  name: 'getWeather',
+                  args: {
+                    city: 'Vancouver'
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    };
+    
+    // Process function calls
+    const functionCalls = gemini.processFunctionCalls(mockResponse);
+    
+    // Verify function calls are extracted correctly
+    expect(functionCalls.length).toBe(1);
+    expect(functionCalls[0].name).toBe('getWeather');
+    expect(functionCalls[0].args).toEqual({city: 'Vancouver'});
+  });
 });
