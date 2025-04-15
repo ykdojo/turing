@@ -25,4 +25,6 @@
 - [ ] Refactor `api.ts` to support the model
 
 ## Function Calling Support
-- [ ] Add function calling capabilities to Gemini API
+- [x] Add function calling capabilities to Gemini API
+- [ ] Update all tests to use Gemini 2.0 Flash consistently instead of Gemini 2.5 Pro
+- [ ] Fix terminal command hallucination issue in production app
