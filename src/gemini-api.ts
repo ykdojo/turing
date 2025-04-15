@@ -2,7 +2,7 @@ import { config } from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import fs from 'node:fs';
 import mime from 'mime-types';
-import { getAvailableTools, terminalCommandTool } from './tools';
+import { getAvailableTools, terminalCommandTool } from './tools.js';
 
 // Initialize environment variables
 config();
