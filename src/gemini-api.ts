@@ -129,17 +129,20 @@ export class GeminiAPI {
           history.push(response.candidates[0].content);
         }
         
-        // Add response.text() method for backward compatibility
-        response.response = {
-          text: () => {
-            if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
-              return response.candidates[0].content.parts[0].text;
+        // Create a wrapper with text() method for backward compatibility
+        const wrappedResponse = {
+          ...response,
+          response: {
+            text: () => {
+              if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
+                return response.candidates[0].content.parts[0].text;
+              }
+              return '';
             }
-            return '';
           }
         };
         
-        return response;
+        return wrappedResponse;
       }
     };
     
@@ -228,13 +231,13 @@ export class GeminiAPI {
       const functionCalls = this.processFunctionCalls(response);
       if (functionCalls.length > 0) {
         return {
-          text: response.response.text(),
+          text: response.response?.text() || '',
           functionCalls,
           response: response // Return the raw response for potential further interactions
         };
       }
       
-      return response.response.text();
+      return response.response?.text() || '';
     } catch (error) {
       console.error("Error sending function results:", error);
       console.error(error instanceof Error ? error.stack : String(error));
@@ -252,13 +255,13 @@ export class GeminiAPI {
     const functionCalls = this.processFunctionCalls(result);
     if (functionCalls.length > 0) {
       return {
-        text: result.response.text(),
+        text: result.response?.text() || '',
         functionCalls,
         chatSession // Return the chat session for continuous interaction
       };
     }
     
-    return result.response.text();
+    return result.response?.text() || '';
   }
 }
 

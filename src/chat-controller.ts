@@ -6,7 +6,7 @@ import { formatMessagesForGeminiAPI, Message as FormatterMessage } from './utils
 export type Message = FormatterMessage;
 
 // System instruction for the Turing terminal assistant
-const SYSTEM_INSTRUCTION = "You are a helpful terminal assistant in the Turing application. You can run terminal commands for the user when appropriate. Only suggest running terminal commands when they are safe and necessary. Provide clear explanations about what commands will do before executing them. Focus on being helpful, concise, and security-conscious.";
+const SYSTEM_INSTRUCTION = `You are a helpful terminal assistant in the Turing application, working in the directory: ${process.cwd()}. You can run terminal commands for the user when appropriate. Only suggest running terminal commands when they are safe and necessary. Provide clear explanations about what commands will do before executing them. Focus on being helpful, concise, and security-conscious.`;
 
 // Initialize Gemini API with a working model, function calling enabled, and system instruction
 const geminiApi = new GeminiAPI('gemini-2.0-flash', undefined, true, SYSTEM_INSTRUCTION);
@@ -254,7 +254,7 @@ export function useChatController() {
               // Replace loading message with regular text response
               newMsgs[newMsgs.length - 1] = { 
                 role: 'assistant', 
-                content: response
+                content: typeof response === 'string' ? response : response.text || ''
               };
               return newMsgs;
             });
@@ -263,7 +263,7 @@ export function useChatController() {
             setChatHistory(prev => [
               ...prev,
               { role: 'user', parts: [{ text: userMessage }] },
-              { role: 'model', parts: [{ text: response }] }
+              { role: 'model', parts: [{ text: typeof response === 'string' ? response : response.text || '' }] }
             ]);
           }
         })
