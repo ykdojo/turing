@@ -10,7 +10,7 @@ describe('Gemini Function Calling Tests', () => {
   
   test('should handle basic function calling setup with custom tool', async () => {
     // Initialize the Gemini API with function calling enabled and use model from GEMINI_MODELS.md
-    const gemini = new GeminiAPI('gemini-2.5-pro-exp-03-25', undefined, true);
+    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
     
     // Verify the toolConfig is configured correctly with AUTO mode (per CLAUDE.md)
     expect(gemini['toolConfig']).toBeDefined();
@@ -36,7 +36,7 @@ describe('Gemini Function Calling Tests', () => {
 
   test('should correctly format function responses for Gemini API', async () => {
     // Initialize the Gemini API with function calling enabled
-    const gemini = new GeminiAPI('gemini-2.5-pro-exp-03-25', undefined, true);
+    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
     
     // Start a chat session
     const chatSession = gemini.startChat();
