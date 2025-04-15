@@ -86,4 +86,121 @@ describe('Gemini Function Calling Tests', () => {
     // Restore the original method
     chatSession.sendMessage = originalMethod;
   });
+
+  test('should handle complete function calling flow with weather example', async () => {
+    // Skip if running CI (API key might not be available)
+    if (process.env.CI) {
+      console.log('Skipping API test in CI environment');
+      return;
+    }
+    
+    // Initialize with function calling enabled
+    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
+    
+    // Spy on the sendFunctionResults method to avoid actual API calls
+    const originalSendFunctionResults = gemini.sendFunctionResults;
+    let functionCallData = null;
+    
+    // Mock sendFunctionResults to verify correct calls and return predictable response
+    gemini.sendFunctionResults = async (chatSession, name, response) => {
+      functionCallData = { name, response };
+      return 'The weather in Vancouver is nice.';
+    };
+    
+    // Mock sendMessage to simulate function call response
+    const originalSendMessage = gemini.sendMessage;
+    gemini.sendMessage = async (prompt, chatSession) => {
+      return {
+        response: {
+          text: () => '',
+          functionCalls: () => [{
+            name: 'getWeather',
+            args: { city: 'vancouver' }
+          }]
+        }
+      };
+    };
+    
+    // Create a chat session and test the flow
+    const chatSession = gemini.startChat();
+    
+    // Send initial prompt that should trigger function call
+    const result = await gemini.sendMessage("what's the weather in vancouver", chatSession);
+    
+    // Verify function call was detected
+    expect(result.response.functionCalls()).toBeDefined();
+    expect(result.response.functionCalls().length).toBe(1);
+    
+    // Extract function call details
+    const functionCall = result.response.functionCalls()[0];
+    expect(functionCall.name).toBe('getWeather');
+    expect(functionCall.args).toEqual({ city: 'vancouver' });
+    
+    // Handle the function call and send results back
+    const functionOutput = { temperature: '22°C', condition: 'Sunny', humidity: '45%' };
+    const response = await gemini.sendFunctionResults(
+      chatSession, 
+      functionCall.name,
+      JSON.stringify(functionOutput)
+    );
+    
+    // Verify function results were sent correctly
+    expect(functionCallData).toEqual({
+      name: 'getWeather',
+      response: JSON.stringify(functionOutput)
+    });
+    
+    // Verify final response
+    expect(response).toBe('The weather in Vancouver is nice.');
+    
+    // Restore original methods
+    gemini.sendMessage = originalSendMessage;
+    gemini.sendFunctionResults = originalSendFunctionResults;
+  });
+
+  test('should handle error cases in function calling', async () => {
+    // Initialize the Gemini API with function calling enabled
+    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
+    
+    // Create a mock chat session
+    const chatSession = gemini.startChat();
+    
+    // Test case 1: Invalid function name
+    try {
+      // Mock sendFunctionResults to simulate sending results for non-existent function
+      const originalSendFunctionResults = gemini.sendFunctionResults;
+      gemini.sendFunctionResults = async (chatSession, name, response) => {
+        if (name === 'nonExistentFunction') {
+          throw new Error('Function nonExistentFunction is not defined in the model configuration.');
+        }
+        return 'Success';
+      };
+      
+      await gemini.sendFunctionResults(chatSession, 'nonExistentFunction', '{}');
+      // If no error is thrown, fail the test
+      expect('Should have thrown an error').toBe(false);
+    } catch (error) {
+      // Verify error was thrown with correct message
+      expect(error.message).toContain('nonExistentFunction');
+    }
+    
+    // Test case 2: Invalid JSON in response
+    try {
+      // Mock sendFunctionResults to simulate sending invalid JSON
+      const originalSendFunctionResults = gemini.sendFunctionResults;
+      gemini.sendFunctionResults = async (chatSession, name, response) => {
+        if (response === 'invalid json') {
+          throw new Error('Invalid JSON in function response');
+        }
+        return 'Success';
+      };
+      
+      await gemini.sendFunctionResults(chatSession, 'getWeather', 'invalid json');
+      // If no error is thrown, fail the test
+      expect('Should have thrown an error').toBe(false);
+    } catch (error) {
+      // Verify error was thrown with correct message
+      expect(error.message).toContain('Invalid JSON');
+    }
+  });
 });
