@@ -5,7 +5,7 @@ describe('Gemini Terminal Command Function Tests', () => {
   
   test('should handle terminal command function configuration', async () => {
     // Initialize the Gemini API with function calling enabled
-    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
+    const gemini = new GeminiAPI('gemini-2.0-flash-lite', undefined, true);
     
     // Verify the toolConfig is configured correctly with AUTO mode (per CLAUDE.md)
     expect(gemini['toolConfig']).toBeDefined();
@@ -39,7 +39,7 @@ describe('Gemini Terminal Command Function Tests', () => {
     }
     
     // Initialize with function calling enabled
-    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
+    const gemini = new GeminiAPI('gemini-2.0-flash-lite', undefined, true);
     
     // Spy on the sendFunctionResults method to avoid actual API calls
     const originalSendFunctionResults = gemini.sendFunctionResults;
@@ -110,7 +110,7 @@ describe('Gemini Terminal Command Function Tests', () => {
 
   test('should handle safety flag for terminal commands', async () => {
     // Initialize with function calling enabled
-    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
+    const gemini = new GeminiAPI('gemini-2.0-flash-lite', undefined, true);
     
     // Mock sendMessage to simulate terminal command function call with unsafe command
     const originalSendMessage = gemini.sendMessage;

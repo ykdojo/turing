@@ -2,6 +2,7 @@
 
 ## Working Models (Verified)
 - `gemini-2.0-flash` - Gemini 2.0 Flash (alias for gemini-2.0-flash-001, supports function calling)
+- `gemini-2.0-flash-lite` - Lighter version of Gemini 2.0 Flash (less likely to hit rate limits, weaker function calling)
 - `gemini-2.0-flash-thinking-exp-01-21` - Gemini 2.0 Flash with thinking capabilities (no function calling support)
 - `gemini-2.5-pro-exp-03-25` - Gemini 2.5 Pro Experimental (free tier access, supports function calling)
 

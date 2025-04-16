@@ -23,7 +23,7 @@ describe('GeminiAPI System Instructions Test', () => {
       
       // Create GeminiAPI instance with system instruction
       const gemini = new GeminiAPI(
-        'gemini-2.0-flash',
+        'gemini-2.0-flash-lite',
         {
           temperature: 0.1,  // Lower temperature for more predictable outputs
           topP: 0.1,

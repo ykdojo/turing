@@ -31,7 +31,7 @@ describe('Gemini API System Instructions Test', () => {
           }
         ],
       };
-      const model = 'gemini-2.0-flash';
+      const model = 'gemini-2.0-flash-lite';
       const contents = [
         {
           role: 'user',

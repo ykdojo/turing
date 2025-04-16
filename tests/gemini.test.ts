@@ -7,7 +7,7 @@ describe('Gemini API Tests', () => {
 
   beforeAll(() => {
     // Initialize the API before all tests
-    gemini = new GeminiAPI("gemini-2.0-flash");
+    gemini = new GeminiAPI("gemini-2.0-flash-lite");
   });
 
   test('API should successfully connect and return exact requested text', async () => {
@@ -71,7 +71,7 @@ describe('Gemini API Tests', () => {
 
   test('API should handle function calling setup for terminal commands', async () => {
     // Initialize with function calling enabled
-    const geminiWithFunctions = new GeminiAPI("gemini-2.0-flash", undefined, true);
+    const geminiWithFunctions = new GeminiAPI("gemini-2.0-flash-lite", undefined, true);
     
     // Verify that the model is configured with the terminal command tool
     expect(geminiWithFunctions).toHaveProperty('tools');
@@ -109,7 +109,7 @@ describe('Gemini API Tests', () => {
     
     // Initialize with system instruction
     const geminiWithSystemInstruction = new GeminiAPI(
-      "gemini-2.0-flash", 
+      "gemini-2.0-flash-lite", 
       undefined, 
       true, 
       testInstruction

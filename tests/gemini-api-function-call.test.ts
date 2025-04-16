@@ -7,7 +7,7 @@ describe('GeminiAPI Function Calling Tests', () => {
   
   test('should handle basic function calling setup with custom tool', async () => {
     // Initialize the Gemini API with function calling enabled
-    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
+    const gemini = new GeminiAPI('gemini-2.0-flash-lite', undefined, true);
     
     // Verify the toolConfig is configured correctly with AUTO mode (per CLAUDE.md)
     expect(gemini['toolConfig']).toBeDefined();
@@ -33,7 +33,7 @@ describe('GeminiAPI Function Calling Tests', () => {
 
   test('should correctly format function responses for Gemini API', async () => {
     // Initialize the Gemini API with function calling enabled
-    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
+    const gemini = new GeminiAPI('gemini-2.0-flash-lite', undefined, true);
     
     // Start a chat session
     const chatSession = gemini.startChat();
@@ -92,7 +92,7 @@ describe('GeminiAPI Function Calling Tests', () => {
     }
     
     // Initialize with function calling enabled
-    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
+    const gemini = new GeminiAPI('gemini-2.0-flash-lite', undefined, true);
     
     // Spy on the sendFunctionResults method to avoid actual API calls
     const originalSendFunctionResults = gemini.sendFunctionResults;
@@ -157,7 +157,7 @@ describe('GeminiAPI Function Calling Tests', () => {
 
   test('should handle error cases in function calling', async () => {
     // Initialize the Gemini API with function calling enabled
-    const gemini = new GeminiAPI('gemini-2.0-flash', undefined, true);
+    const gemini = new GeminiAPI('gemini-2.0-flash-lite', undefined, true);
     
     // Create a mock chat session
     const chatSession = gemini.startChat();
