@@ -1,5 +1,13 @@
 # Conversation Summary
 
+## 2025-04-16: Testing Ctrl+C Exit Functionality in Chat UI
+
+- Created a test for the ChatApp component's Ctrl+C exit functionality in `src/chat-ui.tsx`
+- Worked through multiple approaches to test the React hook interaction with Ink library
+- Successfully implemented a test that verifies the exit function is called when Ctrl+C is pressed
+- The test mocks the Ink library's useApp and useInput hooks to capture and verify interactions
+- Ensured all existing tests continue to pass with the new test implementation
+
 ## Removed unused import in chat-ui.tsx
 - Identified unused `Message` import in chat-ui.tsx
 - Safely removed the import since it wasn't referenced anywhere in the file
