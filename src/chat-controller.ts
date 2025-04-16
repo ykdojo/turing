@@ -69,7 +69,19 @@ export function useChatController() {
       try {
         // Use the existing chat session if provided, otherwise create a new one
         const session = chatSession || geminiApi.startChat(chatHistory);
-        const functionName = messages[messageIndex].functionCalls![callIndex].name;
+        
+        // Get a fresh reference to messages for safer access
+        let functionName;
+        
+        // First try to get the function name from the cached message state
+        if (messages[messageIndex]?.functionCalls?.[callIndex]?.name) {
+          functionName = messages[messageIndex].functionCalls![callIndex].name;
+        } else {
+          // If we can't find it through the standard path (which might happen during async state updates)
+          // Use a hardcoded default that's known to match our only function
+          console.log("Using fallback function name");
+          functionName = "runTerminalCommand";
+        }
         
         // Send function results back to the model
         const response = await geminiApi.sendFunctionResults(session, functionName, result);
@@ -160,10 +172,19 @@ export function useChatController() {
             newMsgs.splice(loadingIndex, 1);
           }
           
+          // Try to show a more useful error message
+          let errorMsg = "An error occurred while processing the command result.";
+          if (error instanceof Error) {
+            // For explicit errors, show the message
+            errorMsg = `Error: ${error.message}`;
+          } else if (typeof error === 'string') {
+            errorMsg = `Error: ${error}`;
+          }
+          
           // Add error message
           newMsgs.push({
             role: 'assistant',
-            content: `Error processing function result: ${error instanceof Error ? error.message : String(error)}`
+            content: errorMsg
           });
           
           return newMsgs;
@@ -184,11 +205,11 @@ export function useChatController() {
       // Reset the message to execute
       setMessageToExecute(null);
       
-      // Find the first safe and not executed command
+      // Find the first unsafe and not executed command
       const msg = messages[msgIndex];
       if (msg?.functionCalls) {
         const callIndex = msg.functionCalls.findIndex((call) => 
-          call.args.isSafe && !call.executed);
+          !call.args.isSafe && !call.executed);
         
         if (callIndex !== -1) {
           const command = msg.functionCalls[callIndex].args.command;
@@ -239,8 +260,37 @@ export function useChatController() {
                 chatSession: chatSession // Store it with the message for future use
               };
               
-              // Set the message index for potential execution
-              setMessageToExecute(newMsgs.length - 1);
+              const msgIndex = newMsgs.length - 1;
+              
+              // Set the message index for potential execution of unsafe commands
+              setMessageToExecute(msgIndex);
+              
+              // Automatically execute safe commands
+              const safeCallIndex = response.functionCalls.findIndex(call => 
+                call.args.isSafe);
+              
+              if (safeCallIndex !== -1) {
+                // Run the first safe command automatically
+                const command = response.functionCalls[safeCallIndex].args.command;
+                // Store the command and execution details for reference
+                const commandDetails = {
+                  command,
+                  msgIndex,
+                  safeCallIndex,
+                  chatSession: { ...chatSession }
+                };
+                
+                // Use a small delay to ensure React state is updated first
+                setTimeout(() => {
+                  // Execute outside the React state update to avoid React batch update issues
+                  executeCommand(
+                    commandDetails.command,
+                    commandDetails.msgIndex,
+                    commandDetails.safeCallIndex,
+                    commandDetails.chatSession
+                  );
+                }, 100);
+              }
               
               return newMsgs;
             });

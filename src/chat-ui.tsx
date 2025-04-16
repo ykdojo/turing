@@ -74,7 +74,7 @@ export const ChatApp = () => {
                               <Text>{call.result}</Text>
                             </Box>
                           )}
-                          {call.args.isSafe && !call.executed && (
+                          {!call.args.isSafe && !call.executed && (
                             <Box marginLeft={2} marginTop={1}>
                               <Text color="magenta">Press Enter to execute this command</Text>
                             </Box>
