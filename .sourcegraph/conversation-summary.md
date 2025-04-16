@@ -27,4 +27,8 @@
 
 6. **Command execution behavior**: User shared conversation showing AI is too hesitant in executing commands.
    - The AI asks for permission before running simple commands like `ls` when the user clearly wants information
-   - Need to make AI more proactive about suggesting relevant commands while maintaining user approval in UI
+   - Made AI more proactive by updating system instructions and function descriptions
+   - Fixed test model consistency by ensuring all tests use gemini-2.0-flash for better rate limits
+
+7. **Test output cleanup**: User noted that tests produce too much console output.
+   - Need to reduce verbose logging in tests to improve readability of test results
