@@ -7,10 +7,7 @@ export const ChatApp = () => {
   const { 
     messages, 
     inputText, 
-    messageToExecute,
-    pendingExecution,
     handleEnterKey,
-    updateInputText,
     appendToInputText,
     backspaceInputText
   } = useChatController();
