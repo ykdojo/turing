@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
 import Spinner from 'ink-spinner';
-import { useChatController, Message } from './chat-controller.js';
+import { useChatController } from './chat-controller.js';
 
 export const ChatApp = () => {
   const { 
