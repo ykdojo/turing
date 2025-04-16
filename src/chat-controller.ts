@@ -105,8 +105,37 @@ export function useChatController() {
               functionCalls: response.functionCalls
             });
             
-            // Set message index for potential execution of next function call
-            setMessageToExecute(newMsgs.length - 1);
+            const msgIndex = newMsgs.length - 1;
+            
+            // Set message index for potential execution of unsafe commands
+            setMessageToExecute(msgIndex);
+            
+            // Automatically execute safe commands
+            const safeCallIndex = response.functionCalls.findIndex((call: {name: string; args: {command: string; isSafe: boolean}}) => 
+              call.args.isSafe);
+            
+            if (safeCallIndex !== -1) {
+              // Run the first safe command automatically
+              const command = response.functionCalls[safeCallIndex].args.command;
+              // Store the command and execution details for reference
+              const commandDetails = {
+                command,
+                msgIndex,
+                safeCallIndex,
+                chatSession: session // Use the current session for continuity
+              };
+              
+              // Use a small delay to ensure React state is updated first
+              setTimeout(() => {
+                // Execute outside the React state update to avoid React batch update issues
+                executeCommand(
+                  commandDetails.command,
+                  commandDetails.msgIndex,
+                  commandDetails.safeCallIndex,
+                  commandDetails.chatSession
+                );
+              }, 100);
+            }
             
             return newMsgs;
           });
@@ -120,7 +149,7 @@ export function useChatController() {
             }
           ]);
           
-          // Reset pending state - we'll wait for user to confirm the next function call
+          // Set pending execution to false (for unsafe commands, safe ones auto-execute)
           setPendingExecution(false);
         } else {
           // No more function calls - just a regular response
