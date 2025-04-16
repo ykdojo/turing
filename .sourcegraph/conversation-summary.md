@@ -23,3 +23,20 @@
 - ESM module mocking complexities in Jest
 - Difficulty testing interactive terminal components in a non-interactive test environment
 - Output validation is challenging with terminal rendering
+
+## Committed changes
+- Removed unused `Message` import from chat-ui.tsx
+- Created a basic UI test in tests/chat-ui.test.tsx
+- Updated Jest configuration to support TSX files
+- Added ink-testing-library dependency
+- Simplified test to focus on basic rendering capability
+
+## Memory management discussions
+- Discussed the importance of consistently updating the conversation summary
+- Acknowledged that despite the memory file instruction, active reminders are needed
+- Committed to being more diligent about updating the conversation summary after each interaction
+- Added explicit three-step process to memory file:
+  1. At START: Check memory file and read conversation summary for context of past interactions
+  2. At END: Update conversation summary BEFORE completing response
+  3. Never finish a response without updating the summary first
+- Added instruction to read the conversation summary at the beginning of each interaction to maintain context
