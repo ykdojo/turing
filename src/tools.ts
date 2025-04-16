@@ -20,7 +20,7 @@ export const terminalCommandTool: ToolDefinition = {
   functionDeclarations: [
     {
       name: "runTerminalCommand",
-      description: "Run a terminal command on the user's system. Proactively suggest this for information gathering tasks like listing files, viewing content, or checking system information. The UI provides safety confirmation, so you should suggest commands confidently when they help answer user queries.",
+      description: "Run a terminal command on the user's system. IMMEDIATELY RUN this tool for information gathering tasks like listing files, viewing content, or checking system information. For commands like ls, pwd, cat, find, grep, etc., run them directly and set isSafe=true. For potentially destructive commands like rm, mv, format, etc., set isSafe=false. The UI will automatically handle the confirmation flow based on the isSafe flag. Never ask for permission in your text response - just set the appropriate isSafe flag and let the UI handle it. Always run appropriate commands immediately without hesitation.",
       parameters: {
         type: "object",
         properties: {
