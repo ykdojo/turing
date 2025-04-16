@@ -7,7 +7,7 @@ describe('Gemini API Tests', () => {
 
   beforeAll(() => {
     // Initialize the API before all tests
-    gemini = new GeminiAPI("gemini-2.0-flash-thinking-exp-01-21");
+    gemini = new GeminiAPI("gemini-2.0-flash");
   });
 
   test('API should successfully connect and return exact requested text', async () => {

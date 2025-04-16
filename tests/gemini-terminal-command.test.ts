@@ -24,7 +24,7 @@ describe('Gemini Terminal Command Function Tests', () => {
     const terminalTool = toolDeclarations.find((fn) => fn.name === 'runTerminalCommand');
     expect(terminalTool).toBeDefined();
     expect(terminalTool.name).toBe('runTerminalCommand');
-    expect(terminalTool.description).toBe('Run a terminal command on the user\'s system');
+    expect(terminalTool.description).toContain('Run a terminal command on the user\'s system');
     expect(terminalTool.parameters.properties).toHaveProperty('command');
     expect(terminalTool.parameters.properties).toHaveProperty('isSafe');
     expect(terminalTool.parameters.required).toContain('command');

@@ -24,3 +24,7 @@
    - Confirmed UI is decoupled from provider specifics, only using controller interface
    - Identified unused variables in UI component: messageToExecute, pendingExecution, updateInputText
    - Updated memory file to emphasize importance of maintaining conversation summary
+
+6. **Command execution behavior**: User shared conversation showing AI is too hesitant in executing commands.
+   - The AI asks for permission before running simple commands like `ls` when the user clearly wants information
+   - Need to make AI more proactive about suggesting relevant commands while maintaining user approval in UI

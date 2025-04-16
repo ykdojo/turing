@@ -20,7 +20,7 @@ export const terminalCommandTool: ToolDefinition = {
   functionDeclarations: [
     {
       name: "runTerminalCommand",
-      description: "Run a terminal command on the user's system",
+      description: "Run a terminal command on the user's system. Proactively suggest this for information gathering tasks like listing files, viewing content, or checking system information. The UI provides safety confirmation, so you should suggest commands confidently when they help answer user queries.",
       parameters: {
         type: "object",
         properties: {
