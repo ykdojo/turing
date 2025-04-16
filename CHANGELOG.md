@@ -1,6 +1,11 @@
 # Changelog
 
-## [2025-04-15] - Latest
+## [2025-04-16] - Latest
+
+### Fixed
+- Improved system instructions to encourage proactive command execution without asking for permission
+
+## [2025-04-15]
 
 ### Changed
 - Refactored tool definitions into separate `tools.ts` file for better organization
