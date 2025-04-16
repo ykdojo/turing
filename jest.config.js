@@ -7,7 +7,7 @@ export default {
       tsconfig: 'tsconfig.test.json'
     }]
   },
-  extensionsToTreatAsEsm: ['.ts'],
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1'
   },
