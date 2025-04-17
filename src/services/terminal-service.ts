@@ -44,12 +44,12 @@ export function executeCommand(
       }
     ]);
     
-    // Update chat history with function execution info but without showing the result again
+    // Update chat history with function execution info including the actual result
     setChatHistory(prev => [
       ...prev,
       { 
         role: 'system', 
-        parts: [{ text: `Command executed: ${command}` }] 
+        parts: [{ text: result }] 
       }
     ]);
     
