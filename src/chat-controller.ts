@@ -3,6 +3,7 @@ import { GeminiAPI } from './gemini-api.js';
 import { formatMessagesForGeminiAPI, Message as FormatterMessage } from './utils/message-formatter.js';
 import { executeCommand } from './services/terminal-service.js';
 import { editFile } from './services/file-edit-service.js';
+import { writeFile } from './services/write-file-service.js';
 
 export type Message = FormatterMessage;
 
@@ -155,8 +156,8 @@ export function useChatController() {
                 if (call.name === "runTerminalCommand") {
                   return call.args.isSafe === true;
                 }
-                // For editFile, always consider it safe
-                if (call.name === "editFile") {
+                // For editFile and writeFile, always consider them safe
+                if (call.name === "editFile" || call.name === "writeFile") {
                   return true;
                 }
                 // By default, consider functions unsafe
@@ -195,6 +196,19 @@ export function useChatController() {
                       call.args.filePath,
                       call.args.searchString,
                       call.args.replaceString,
+                      commandDetails.msgIndex,
+                      commandDetails.safeCallIndex,
+                      commandDetails.chatSession,
+                      geminiApi,
+                      setMessages,
+                      setChatHistory,
+                      setPendingExecution,
+                      setMessageToExecute
+                    );
+                  } else if (call.name === "writeFile") {
+                    writeFile(
+                      call.args.filePath,
+                      call.args.content,
                       commandDetails.msgIndex,
                       commandDetails.safeCallIndex,
                       commandDetails.chatSession,

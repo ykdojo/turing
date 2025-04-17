@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 
 export interface ToolDefinition {
   functionDeclarations: FunctionDeclaration[];
@@ -61,6 +62,30 @@ export const fileEditTool: ToolDefinition = {
           }
         },
         required: ["filePath", "searchString", "replaceString"]
+      }
+    }
+  ]
+};
+
+// File write tool definition
+export const fileWriteTool: ToolDefinition = {
+  functionDeclarations: [
+    {
+      name: "writeFile",
+      description: "Create a new file or replace an existing file with the provided content. This operation is always considered safe and will run automatically without confirmation.",
+      parameters: {
+        type: "object",
+        properties: {
+          filePath: {
+            type: "string",
+            description: "The path to the file to create or replace"
+          },
+          content: {
+            type: "string",
+            description: "The content to write to the file"
+          }
+        },
+        required: ["filePath", "content"]
       }
     }
   ]
@@ -143,13 +168,51 @@ export class FileEditHandler implements ToolHandler {
   }
 }
 
+// File write tool handler
+export class FileWriteHandler implements ToolHandler {
+  async handleFunctionCall(args: { filePath: string, content: string }): Promise<string> {
+    try {
+      const { filePath, content } = args;
+      
+      // Ensure directory exists
+      const directory = path.dirname(filePath);
+      if (!fs.existsSync(directory)) {
+        fs.mkdirSync(directory, { recursive: true });
+      }
+      
+      // Check if file already exists
+      const fileExists = fs.existsSync(filePath);
+      const action = fileExists ? 'Updated' : 'Created';
+      
+      // Write content to file
+      fs.writeFileSync(filePath, content, 'utf8');
+      
+      return JSON.stringify({
+        output: `${action} file at ${filePath}`,
+        exitCode: 0
+      });
+    } catch (error) {
+      let message = 'An unknown error occurred';
+      if (error instanceof Error) {
+        message = error.message;
+      }
+      
+      return JSON.stringify({
+        output: `Error: ${message}`,
+        exitCode: 1
+      });
+    }
+  }
+}
+
 // Registry of tool handlers
 export const toolHandlers: Record<string, ToolHandler> = {
   runTerminalCommand: new TerminalCommandHandler(),
-  editFile: new FileEditHandler()
+  editFile: new FileEditHandler(),
+  writeFile: new FileWriteHandler()
 };
 
 // Get all available tools
 export function getAvailableTools(): ToolDefinition[] {
-  return [terminalCommandTool, fileEditTool];
+  return [terminalCommandTool, fileEditTool, fileWriteTool];
 }
