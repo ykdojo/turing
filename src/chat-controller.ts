@@ -300,28 +300,41 @@ export function useChatController() {
   
   const useSelectedMessage = () => {
     if (isHistoryMode && selectedMessageIndex >= 0 && selectedMessageIndex < messages.length) {
-      // Get selected message and set as input text
-      const selectedMessage = messages[selectedMessageIndex].content;
+      // Get selected message index and content
+      const msgIndex = selectedMessageIndex;
+      const selectedMessage = messages[msgIndex].content;
+      
+      // Calculate how many messages to keep
+      // We need to find the LAST user message before this point
+      // 1. Find all messages before the selected index
+      // 2. Filter for user messages
+      const userMessageIndices = messages
+        .map((msg, idx) => idx < msgIndex && msg.role === 'user' ? idx : -1)
+        .filter(idx => idx !== -1);
+      
+      // Find the last user message if any
+      const lastUserMessageIdx = userMessageIndices.length > 0 
+        ? userMessageIndices[userMessageIndices.length - 1] 
+        : -1;
+      
+      // Keep conversation up to the last user message
+      // If there are no user messages, clear all messages
+      const keepUpToIndex = lastUserMessageIdx >= 0 
+        ? lastUserMessageIdx + 2  // +2 to keep the last user message and AI response
+        : 0;                      // No previous messages, clear all
+      
+      // Set input text to selected message
       setInputText(selectedMessage);
       
-      // Remove the selected message and all messages after it
-      setMessages(prevMessages => {
-        // Keep only messages before the selected message
-        return prevMessages.slice(0, selectedMessageIndex);
-      });
+      // Update message list - keep only up to the calculated index
+      setMessages(prevMessages => prevMessages.slice(0, keepUpToIndex));
       
       // Also update the chat history state to match
       setChatHistory(prevHistory => {
-        // Find the corresponding position in the chat history
-        // Each user message has a corresponding model response, so we need to calculate
-        // the position in the chat history carefully
-        const userMessagesBeforeSelected = messages
-          .slice(0, selectedMessageIndex)
-          .filter(msg => msg.role === 'user').length;
-          
-        // Each user message takes 2 entries in the chat history (user + model)
-        // So we keep only the entries before the selected user message
-        return prevHistory.slice(0, userMessagesBeforeSelected * 2);
+        // Each user message typically has a corresponding response
+        // Cut the history to match the kept user messages
+        const userMessagesKept = userMessageIndices.length;
+        return prevHistory.slice(0, userMessagesKept * 2);
       });
       
       // Exit history mode
