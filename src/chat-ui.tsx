@@ -9,7 +9,8 @@ export const ChatApp = () => {
     inputText, 
     handleEnterKey,
     appendToInputText,
-    backspaceInputText
+    backspaceInputText,
+    showPreviousUserMessages
   } = useChatController();
   
   const { exit } = useApp();
@@ -25,7 +26,9 @@ export const ChatApp = () => {
       handleEnterKey();
     } else if (key.backspace || key.delete) {
       backspaceInputText();
-    } else if (!key.ctrl && !key.meta && !key.escape && 
+    } else if (key.escape) {
+      showPreviousUserMessages();
+    } else if (!key.ctrl && !key.meta && 
                !key.rightArrow && !key.leftArrow && 
                !key.upArrow && !key.downArrow && 
                !key.tab) {

@@ -231,6 +231,21 @@ export function useChatController() {
     setInputText(prev => prev.slice(0, -1));
   };
 
+  const showPreviousUserMessages = () => {
+    // Only activate when input box is empty
+    if (inputText === '') {
+      // Get all user messages from history
+      const userMessages = messages
+        .filter(msg => msg.role === 'user')
+        .map(msg => msg.content);
+      
+      // Display all user messages combined
+      if (userMessages.length > 0) {
+        setInputText(userMessages.join('\n'));
+      }
+    }
+  };
+
   return {
     messages,
     inputText,
@@ -239,6 +254,7 @@ export function useChatController() {
     handleEnterKey,
     updateInputText,
     appendToInputText,
-    backspaceInputText
+    backspaceInputText,
+    showPreviousUserMessages
   };
 }
