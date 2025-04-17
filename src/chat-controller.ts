@@ -24,6 +24,8 @@ export function useChatController() {
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [pendingExecution, setPendingExecution] = useState<boolean>(false);
   const [messageToExecute, setMessageToExecute] = useState<number | null>(null);
+  const [isHistoryMode, setIsHistoryMode] = useState<boolean>(false);
+  const [selectedMessageIndex, setSelectedMessageIndex] = useState<number>(-1);
   
   // Handle action when user presses Enter
   const handleEnterKey = () => {
@@ -231,18 +233,76 @@ export function useChatController() {
     setInputText(prev => prev.slice(0, -1));
   };
 
-  const showPreviousUserMessages = () => {
-    // Only activate when input box is empty
+  const toggleHistoryMode = () => {
+    // Only toggle when input box is empty
     if (inputText === '') {
-      // Get all user messages from history
-      const userMessages = messages
-        .filter(msg => msg.role === 'user')
-        .map(msg => msg.content);
+      // Toggle history mode
+      setIsHistoryMode(!isHistoryMode);
       
-      // Display all user messages combined
-      if (userMessages.length > 0) {
-        setInputText(userMessages.join('\n'));
+      // Reset selected message index when entering history mode
+      if (!isHistoryMode) {
+        const userMessageIndices = messages
+          .map((msg, idx) => msg.role === 'user' ? idx : -1)
+          .filter(idx => idx !== -1);
+        
+        // Select the most recent user message if available
+        if (userMessageIndices.length > 0) {
+          setSelectedMessageIndex(userMessageIndices[userMessageIndices.length - 1]);
+        }
       }
+    }
+  };
+  
+  const selectPreviousMessage = () => {
+    if (isHistoryMode) {
+      // Get indices of all user messages
+      const userMessageIndices = messages
+        .map((msg, idx) => msg.role === 'user' ? idx : -1)
+        .filter(idx => idx !== -1);
+      
+      if (userMessageIndices.length > 0) {
+        // Find current index in the list of user messages
+        const currentIndexPosition = userMessageIndices.indexOf(selectedMessageIndex);
+        
+        // Get previous message index (wrap around to end if at beginning)
+        const newPosition = currentIndexPosition <= 0 
+          ? userMessageIndices.length - 1 
+          : currentIndexPosition - 1;
+          
+        setSelectedMessageIndex(userMessageIndices[newPosition]);
+      }
+    }
+  };
+  
+  const selectNextMessage = () => {
+    if (isHistoryMode) {
+      // Get indices of all user messages
+      const userMessageIndices = messages
+        .map((msg, idx) => msg.role === 'user' ? idx : -1)
+        .filter(idx => idx !== -1);
+      
+      if (userMessageIndices.length > 0) {
+        // Find current index in the list of user messages
+        const currentIndexPosition = userMessageIndices.indexOf(selectedMessageIndex);
+        
+        // Get next message index (wrap around to beginning if at end)
+        const newPosition = currentIndexPosition >= userMessageIndices.length - 1 
+          ? 0 
+          : currentIndexPosition + 1;
+          
+        setSelectedMessageIndex(userMessageIndices[newPosition]);
+      }
+    }
+  };
+  
+  const useSelectedMessage = () => {
+    if (isHistoryMode && selectedMessageIndex >= 0 && selectedMessageIndex < messages.length) {
+      // Get selected message and set as input text
+      const selectedMessage = messages[selectedMessageIndex].content;
+      setInputText(selectedMessage);
+      
+      // Exit history mode
+      setIsHistoryMode(false);
     }
   };
 
@@ -251,10 +311,15 @@ export function useChatController() {
     inputText,
     messageToExecute,
     pendingExecution,
+    isHistoryMode,
+    selectedMessageIndex,
     handleEnterKey,
     updateInputText,
     appendToInputText,
     backspaceInputText,
-    showPreviousUserMessages
+    toggleHistoryMode,
+    selectPreviousMessage,
+    selectNextMessage,
+    useSelectedMessage
   };
 }

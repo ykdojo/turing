@@ -7,10 +7,15 @@ export const ChatApp = () => {
   const { 
     messages, 
     inputText, 
+    isHistoryMode,
+    selectedMessageIndex,
     handleEnterKey,
     appendToInputText,
     backspaceInputText,
-    showPreviousUserMessages
+    toggleHistoryMode,
+    selectPreviousMessage,
+    selectNextMessage,
+    useSelectedMessage
   } = useChatController();
   
   const { exit } = useApp();
@@ -22,17 +27,36 @@ export const ChatApp = () => {
       return;
     }
     
-    if (key.return) {
-      handleEnterKey();
-    } else if (key.backspace || key.delete) {
-      backspaceInputText();
-    } else if (key.escape) {
-      showPreviousUserMessages();
-    } else if (!key.ctrl && !key.meta && 
-               !key.rightArrow && !key.leftArrow && 
-               !key.upArrow && !key.downArrow && 
-               !key.tab) {
-      appendToInputText(input);
+    if (isHistoryMode) {
+      // Special handling in history mode
+      if (key.escape) {
+        // Exit history mode
+        toggleHistoryMode();
+      } else if (key.return) {
+        // Use the selected message
+        useSelectedMessage();
+      } else if (key.upArrow) {
+        // Navigate to previous message
+        selectPreviousMessage();
+      } else if (key.downArrow) {
+        // Navigate to next message
+        selectNextMessage();
+      }
+    } else {
+      // Normal input mode
+      if (key.return) {
+        handleEnterKey();
+      } else if (key.backspace || key.delete) {
+        backspaceInputText();
+      } else if (key.escape) {
+        // Enter history mode if input is empty
+        toggleHistoryMode();
+      } else if (!key.ctrl && !key.meta && 
+                 !key.rightArrow && !key.leftArrow && 
+                 !key.upArrow && !key.downArrow && 
+                 !key.tab) {
+        appendToInputText(input);
+      }
     }
   });
 
@@ -122,10 +146,28 @@ export const ChatApp = () => {
         ))}
       </Box>
       
-      {/* Input prompt with cursor indicator */}
-      <Box borderStyle="single" borderColor="gray" padding={1}>
-        <Text>{`> ${inputText}`}<Text backgroundColor="white"> </Text></Text>
-      </Box>
+      {/* Input prompt with cursor indicator or history mode display */}
+      {isHistoryMode ? (
+        <Box flexDirection="column" borderStyle="single" borderColor="magenta" padding={1}>
+          <Text bold color="magenta">History Mode (Use ↑/↓ to navigate, Enter to select, Esc to exit)</Text>
+          {messages
+            .filter(msg => msg.role === 'user')
+            .map((msg, idx) => {
+              const isSelected = messages.indexOf(msg) === selectedMessageIndex;
+              return (
+                <Box key={idx} marginY={1}>
+                  <Text color={isSelected ? 'green' : 'gray'} backgroundColor={isSelected ? 'black' : undefined}>
+                    {isSelected ? '→ ' : '  '}{msg.content}
+                  </Text>
+                </Box>
+              );
+            })}
+        </Box>
+      ) : (
+        <Box borderStyle="single" borderColor="gray" padding={1}>
+          <Text>{`> ${inputText}`}<Text backgroundColor="white"> </Text></Text>
+        </Box>
+      )}
     </Box>
   );
 };
