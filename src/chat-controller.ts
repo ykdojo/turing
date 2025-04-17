@@ -24,9 +24,18 @@ export function useChatController() {
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [pendingExecution, setPendingExecution] = useState<boolean>(false);
   const [messageToExecute, setMessageToExecute] = useState<number | null>(null);
+  const [isHistoryMode, setIsHistoryMode] = useState<boolean>(false);
+  const [selectedMessageIndex, setSelectedMessageIndex] = useState<number | null>(null);
   
   // Handle action when user presses Enter
   const handleEnterKey = () => {
+    // If in history mode, exit it and return to normal input mode
+    if (isHistoryMode) {
+      setIsHistoryMode(false);
+      setSelectedMessageIndex(null);
+      return true;
+    }
+    
     // Check if we have any pending safe commands to execute
     if (messageToExecute !== null) {
       const msgIndex = messageToExecute;
@@ -218,32 +227,59 @@ export function useChatController() {
     return false; // No action taken
   };
 
+  // Navigate through messages in history mode
+  const navigateHistory = (direction: 'up' | 'down') => {
+    if (!isHistoryMode) return;
+    
+    const userMessages = messages.filter(msg => msg.role === 'user');
+    if (userMessages.length === 0) return;
+    
+    if (selectedMessageIndex === null) {
+      setSelectedMessageIndex(direction === 'up' ? userMessages.length - 1 : 0);
+    } else {
+      const newIndex = direction === 'up' 
+        ? Math.max(0, selectedMessageIndex - 1)
+        : Math.min(userMessages.length - 1, selectedMessageIndex + 1);
+      setSelectedMessageIndex(newIndex);
+    }
+  };
+
   // Text input handlers
   const updateInputText = (text: string) => {
     setInputText(text);
   };
 
   const appendToInputText = (text: string) => {
+    if (isHistoryMode) return;
     setInputText(prev => prev + text);
   };
 
   const backspaceInputText = () => {
+    if (isHistoryMode) return;
     setInputText(prev => prev.slice(0, -1));
   };
 
-  const showPreviousUserMessages = () => {
-    // Only activate when input box is empty
-    if (inputText === '') {
-      // Get all user messages from history
-      const userMessages = messages
-        .filter(msg => msg.role === 'user')
-        .map(msg => msg.content);
-      
-      // Display all user messages combined
+  const toggleHistoryMode = () => {
+    // Toggle history mode
+    const newHistoryMode = !isHistoryMode;
+    setIsHistoryMode(newHistoryMode);
+    
+    // If exiting history mode, clear any selection
+    if (!newHistoryMode) {
+      setSelectedMessageIndex(null);
+      setInputText('');
+    } else {
+      // If entering history mode, select the most recent user message
+      const userMessages = messages.filter(msg => msg.role === 'user');
       if (userMessages.length > 0) {
-        setInputText(userMessages.join('\n'));
+        setSelectedMessageIndex(userMessages.length - 1);
       }
     }
+  };
+
+  const showPreviousUserMessages = () => {
+    // This function is kept for backward compatibility
+    toggleHistoryMode();
   };
 
   return {
@@ -251,10 +287,14 @@ export function useChatController() {
     inputText,
     messageToExecute,
     pendingExecution,
+    isHistoryMode,
+    selectedMessageIndex,
     handleEnterKey,
     updateInputText,
     appendToInputText,
     backspaceInputText,
-    showPreviousUserMessages
+    showPreviousUserMessages,
+    toggleHistoryMode,
+    navigateHistory
   };
 }
