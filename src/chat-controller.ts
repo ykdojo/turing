@@ -234,22 +234,25 @@ export function useChatController() {
   };
 
   const toggleHistoryMode = () => {
-    // Only toggle when input box is empty
-    if (inputText === '') {
-      // Toggle history mode
-      setIsHistoryMode(!isHistoryMode);
+    // Store current input if entering history mode and input is not empty
+    const currentInput = inputText;
+    
+    // Toggle history mode
+    setIsHistoryMode(!isHistoryMode);
+    
+    // Reset selected message index when entering history mode
+    if (!isHistoryMode) {
+      const userMessageIndices = messages
+        .map((msg, idx) => msg.role === 'user' ? idx : -1)
+        .filter(idx => idx !== -1);
       
-      // Reset selected message index when entering history mode
-      if (!isHistoryMode) {
-        const userMessageIndices = messages
-          .map((msg, idx) => msg.role === 'user' ? idx : -1)
-          .filter(idx => idx !== -1);
-        
-        // Select the most recent user message if available
-        if (userMessageIndices.length > 0) {
-          setSelectedMessageIndex(userMessageIndices[userMessageIndices.length - 1]);
-        }
+      // Select the most recent user message if available
+      if (userMessageIndices.length > 0) {
+        setSelectedMessageIndex(userMessageIndices[userMessageIndices.length - 1]);
       }
+    } else if (currentInput) {
+      // Restore input when exiting history mode
+      setInputText(currentInput);
     }
   };
   

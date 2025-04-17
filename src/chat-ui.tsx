@@ -49,7 +49,7 @@ export const ChatApp = () => {
       } else if (key.backspace || key.delete) {
         backspaceInputText();
       } else if (key.escape) {
-        // Enter history mode if input is empty
+        // Enter history mode (works even with text in the input box)
         toggleHistoryMode();
       } else if (!key.ctrl && !key.meta && 
                  !key.rightArrow && !key.leftArrow && 
