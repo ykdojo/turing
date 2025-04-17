@@ -99,7 +99,7 @@ export const ChatApp = () => {
                       </Text>
                       
                       {message.functionCalls && message.functionCalls.length > 0 && (
-                        <Box flexDirection="column" marginTop={1} borderStyle="round" borderColor="yellow" padding={1}>
+                        <Box flexDirection="column" marginTop={1}>
                           <Text bold color="yellow">Function Call:</Text>
                           {message.functionCalls.map((call: any, idx: number) => (
                             <Box key={idx} flexDirection="column" marginLeft={1}>
