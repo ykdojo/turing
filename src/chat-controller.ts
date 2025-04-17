@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { GeminiAPI } from './gemini-api.js';
 import { formatMessagesForGeminiAPI, Message as FormatterMessage } from './utils/message-formatter.js';
 import { executeCommand } from './services/terminal-service.js';
+import { editFile } from './services/file-edit-service.js';
 
 export type Message = FormatterMessage;
 
@@ -35,24 +36,34 @@ export function useChatController() {
       // Find the first unsafe and not executed command
       const msg = messages[msgIndex];
       if (msg?.functionCalls) {
-        const callIndex = msg.functionCalls.findIndex((call) => 
-          !call.args.isSafe && !call.executed);
+        const callIndex = msg.functionCalls.findIndex((call) => {
+          // For runTerminalCommand, check if it's unsafe and not executed
+          if (call.name === "runTerminalCommand") {
+            return !call.args.isSafe && !call.executed;
+          }
+          // All other functions are considered already executed or safe
+          return false;
+        });
         
         if (callIndex !== -1) {
-          const command = msg.functionCalls[callIndex].args.command;
-          // Pass the chat session if available for continuity
-          executeCommand(
-            command, 
-            msgIndex, 
-            callIndex, 
-            msg.chatSession,
-            geminiApi,
-            setMessages,
-            setChatHistory,
-            setPendingExecution,
-            setMessageToExecute
-          );
-          return true; // Command execution initiated
+          const call = msg.functionCalls[callIndex];
+          // Check which function to execute
+          if (call.name === "runTerminalCommand") {
+            const command = call.args.command;
+            // Pass the chat session if available for continuity
+            executeCommand(
+              command, 
+              msgIndex, 
+              callIndex, 
+              msg.chatSession,
+              geminiApi,
+              setMessages,
+              setChatHistory,
+              setPendingExecution,
+              setMessageToExecute
+            );
+            return true; // Command execution initiated
+          }
         }
       }
     }
@@ -103,15 +114,26 @@ export function useChatController() {
               setMessageToExecute(msgIndex);
               
               // Automatically execute safe commands
-              const safeCallIndex = response.functionCalls.findIndex(call => 
-                call.args.isSafe);
+              const safeCallIndex = response.functionCalls.findIndex(call => {
+                // For runTerminalCommand, check the isSafe flag
+                if (call.name === "runTerminalCommand") {
+                  return call.args.isSafe === true;
+                }
+                // For editFile, always consider it safe
+                if (call.name === "editFile") {
+                  return true;
+                }
+                // By default, consider functions unsafe
+                return false;
+              });
               
               if (safeCallIndex !== -1) {
-                // Run the first safe command automatically
-                const command = response.functionCalls[safeCallIndex].args.command;
+                // Get the function call
+                const call = response.functionCalls[safeCallIndex];
+                
                 // Store the command and execution details for reference
                 const commandDetails = {
-                  command,
+                  call,
                   msgIndex,
                   safeCallIndex,
                   chatSession: { ...chatSession }
@@ -119,18 +141,34 @@ export function useChatController() {
                 
                 // Use a small delay to ensure React state is updated first
                 setTimeout(() => {
-                  // Execute outside the React state update to avoid React batch update issues
-                  executeCommand(
-                    commandDetails.command,
-                    commandDetails.msgIndex,
-                    commandDetails.safeCallIndex,
-                    commandDetails.chatSession,
-                    geminiApi,
-                    setMessages,
-                    setChatHistory,
-                    setPendingExecution,
-                    setMessageToExecute
-                  );
+                  // Execute the appropriate function based on the function name
+                  if (call.name === "runTerminalCommand") {
+                    executeCommand(
+                      call.args.command,
+                      commandDetails.msgIndex,
+                      commandDetails.safeCallIndex,
+                      commandDetails.chatSession,
+                      geminiApi,
+                      setMessages,
+                      setChatHistory,
+                      setPendingExecution,
+                      setMessageToExecute
+                    );
+                  } else if (call.name === "editFile") {
+                    editFile(
+                      call.args.filePath,
+                      call.args.searchString,
+                      call.args.replaceString,
+                      commandDetails.msgIndex,
+                      commandDetails.safeCallIndex,
+                      commandDetails.chatSession,
+                      geminiApi,
+                      setMessages,
+                      setChatHistory,
+                      setPendingExecution,
+                      setMessageToExecute
+                    );
+                  }
                 }, 100);
               }
               

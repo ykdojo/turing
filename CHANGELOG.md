@@ -1,6 +1,20 @@
 # Changelog
 
-## [2025-04-16] - Latest
+## [2025-04-17] - Latest
+
+### Added
+- New file editing tool that allows replacing text in files
+- Implemented file edit service for safe file editing operations
+- File edits are always considered safe and run automatically
+
+### Fixed
+- Updated UI to properly display file edit operations with appropriate fields
+- Improved safety checks to ensure file editing operations are always treated as safe
+- Enhanced UI to show different information based on function type
+- Added jsxFragmentFactory to TypeScript configuration to support JSX fragments
+- Updated code to use explicit React.Fragment instead of shorthand syntax
+
+## [2025-04-16]
 
 ### Fixed
 - Improved system instructions to encourage proactive command execution without asking for permission

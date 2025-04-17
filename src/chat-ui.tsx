@@ -58,23 +58,52 @@ export const ChatApp = () => {
                       {message.functionCalls.map((call: any, idx: number) => (
                         <Box key={idx} flexDirection="column" marginLeft={1}>
                           <Text color="yellow">• {call.name}</Text>
-                          <Box marginLeft={2}>
-                            <Text color="cyan">Command: </Text>
-                            <Text>{call.args.command}</Text>
-                          </Box>
-                          <Box marginLeft={2}>
-                            <Text color="cyan">Safe: </Text>
-                            <Text color={call.args.isSafe ? "green" : "red"}>
-                              {call.args.isSafe ? "Yes" : "No"}
-                            </Text>
-                          </Box>
+                          {/* Display appropriate information based on function type */}
+                          {call.name === "runTerminalCommand" && (
+                            <React.Fragment>
+                              <Box marginLeft={2}>
+                                <Text color="cyan">Command: </Text>
+                                <Text>{call.args.command}</Text>
+                              </Box>
+                              <Box marginLeft={2}>
+                                <Text color="cyan">Safe: </Text>
+                                <Text color={call.args.isSafe ? "green" : "red"}>
+                                  {call.args.isSafe ? "Yes" : "No"}
+                                </Text>
+                              </Box>
+                            </React.Fragment>
+                          )}
+                          
+                          {call.name === "editFile" && (
+                            <React.Fragment>
+                              <Box marginLeft={2}>
+                                <Text color="cyan">File: </Text>
+                                <Text>{call.args.filePath}</Text>
+                              </Box>
+                              <Box marginLeft={2}>
+                                <Text color="cyan">Search: </Text>
+                                <Text>"{call.args.searchString}"</Text>
+                              </Box>
+                              <Box marginLeft={2}>
+                                <Text color="cyan">Replace: </Text>
+                                <Text>"{call.args.replaceString}"</Text>
+                              </Box>
+                              <Box marginLeft={2}>
+                                <Text color="cyan">Safe: </Text>
+                                <Text color="green">Yes</Text>
+                              </Box>
+                            </React.Fragment>
+                          )}
+                          
                           {call.executed && (
                             <Box marginLeft={2} marginTop={1}>
                               <Text color="cyan">Result: </Text>
                               <Text>{call.result}</Text>
                             </Box>
                           )}
-                          {!call.args.isSafe && !call.executed && (
+                          
+                          {/* Only show prompt for unsafe terminal commands */}
+                          {call.name === "runTerminalCommand" && !call.args.isSafe && !call.executed && (
                             <Box marginLeft={2} marginTop={1}>
                               <Text color="magenta">Press Enter to execute this command</Text>
                             </Box>
