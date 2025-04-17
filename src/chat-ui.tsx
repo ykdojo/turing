@@ -78,7 +78,7 @@ export const ChatApp = () => {
                 borderColor={isSelected ? "blue" : undefined}
               >
                 <Text bold color={message.role === 'user' ? 
-                  (isHistoryMode && !isSelected ? 'gray' : 'green') : 'cyan'}>
+                  (isHistoryMode && !isSelected ? 'gray' : 'gray') : 'white'}>
                   {message.role === 'user' ? 
                     (isSelected ? '> You:' : '> You:') : 
                     '>> Amp:'}
@@ -93,8 +93,7 @@ export const ChatApp = () => {
                     <Box flexDirection="column">
                       <Text 
                         wrap="wrap" 
-                        color={isHistoryMode && !isSelected ? 'gray' : 
-                               message.role === 'user' ? 'green' : 'cyan'}
+                        color={message.role === 'user' ? 'gray' : undefined}
                       >
                         {message.content}
                       </Text>
