@@ -2,7 +2,6 @@ import { GeminiAPI } from '../gemini-api.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { executeCommand } from './terminal-service.js';
-import { editFile } from './file-edit-service.js';
 
 /**
  * Function to write content to a file (create or replace)
@@ -142,8 +141,8 @@ async function handleResult(
           if (call.name === "runTerminalCommand") {
             return call.args.isSafe === true;
           }
-          // For editFile or writeFile, always consider it safe
-          if (call.name === "editFile" || call.name === "writeFile") {
+          // For writeFile, always consider it safe
+          if (call.name === "writeFile") {
             return true;
           }
           // By default, consider functions unsafe
@@ -168,21 +167,6 @@ async function handleResult(
             if (call.name === "runTerminalCommand") {
               executeCommand(
                 call.args.command,
-                commandDetails.msgIndex,
-                commandDetails.safeCallIndex,
-                commandDetails.chatSession,
-                geminiApi,
-                setMessages,
-                setChatHistory,
-                setPendingExecution,
-                setMessageToExecute
-              );
-            } else if (call.name === "editFile") {
-              // editFile is already imported at the top of the file
-              editFile(
-                call.args.filePath,
-                call.args.searchString,
-                call.args.replaceString,
                 commandDetails.msgIndex,
                 commandDetails.safeCallIndex,
                 commandDetails.chatSession,

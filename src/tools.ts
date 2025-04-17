@@ -39,33 +39,6 @@ export const terminalCommandTool: ToolDefinition = {
   ]
 };
 
-// File edit tool definition
-export const fileEditTool: ToolDefinition = {
-  functionDeclarations: [
-    {
-      name: "editFile",
-      description: "Edit a file by replacing a search string with a replacement string. This operation is always considered safe and will run automatically without confirmation.",
-      parameters: {
-        type: "object",
-        properties: {
-          filePath: {
-            type: "string",
-            description: "The path to the file to edit"
-          },
-          searchString: {
-            type: "string",
-            description: "The string to search for in the file"
-          },
-          replaceString: {
-            type: "string",
-            description: "The string to replace the search string with"
-          }
-        },
-        required: ["filePath", "searchString", "replaceString"]
-      }
-    }
-  ]
-};
 
 // File write tool definition
 export const fileWriteTool: ToolDefinition = {
@@ -115,58 +88,6 @@ export class TerminalCommandHandler implements ToolHandler {
   }
 }
 
-// File edit tool handler
-export class FileEditHandler implements ToolHandler {
-  async handleFunctionCall(args: { filePath: string, searchString: string, replaceString: string }): Promise<string> {
-    try {
-      // fs is already imported at the top of the file
-      const { filePath, searchString, replaceString } = args;
-      
-      // Check if file exists
-      if (!fs.existsSync(filePath)) {
-        return JSON.stringify({
-          output: `Error: File not found at ${filePath}`,
-          exitCode: 1
-        });
-      }
-      
-      // Read file content
-      const content = fs.readFileSync(filePath, 'utf8');
-      
-      // Replace content
-      const newContent = content.replace(new RegExp(searchString, 'g'), replaceString);
-      
-      // Check if any replacements were made
-      if (content === newContent) {
-        return JSON.stringify({
-          output: `No occurrences of "${searchString}" found in the file.`,
-          exitCode: 0
-        });
-      }
-      
-      // Write back to file
-      fs.writeFileSync(filePath, newContent, 'utf8');
-      
-      // Count replacements
-      const replacements = (content.match(new RegExp(searchString, 'g')) || []).length;
-      
-      return JSON.stringify({
-        output: `Successfully replaced ${replacements} occurrence${replacements !== 1 ? 's' : ''} of "${searchString}" with "${replaceString}" in ${filePath}`,
-        exitCode: 0
-      });
-    } catch (error) {
-      let message = 'An unknown error occurred';
-      if (error instanceof Error) {
-        message = error.message;
-      }
-      
-      return JSON.stringify({
-        output: `Error: ${message}`,
-        exitCode: 1
-      });
-    }
-  }
-}
 
 // File write tool handler
 export class FileWriteHandler implements ToolHandler {
@@ -208,11 +129,10 @@ export class FileWriteHandler implements ToolHandler {
 // Registry of tool handlers
 export const toolHandlers: Record<string, ToolHandler> = {
   runTerminalCommand: new TerminalCommandHandler(),
-  editFile: new FileEditHandler(),
   writeFile: new FileWriteHandler()
 };
 
 // Get all available tools
 export function getAvailableTools(): ToolDefinition[] {
-  return [terminalCommandTool, fileEditTool, fileWriteTool];
+  return [terminalCommandTool, fileWriteTool];
 }
