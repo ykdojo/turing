@@ -29,8 +29,31 @@ export function useChatController() {
   
   // Handle action when user presses Enter
   const handleEnterKey = () => {
-    // If in history mode, exit it and return to normal input mode
-    if (isHistoryMode) {
+    // If in history mode, select the current message and exit history mode
+    if (isHistoryMode && selectedMessageIndex !== null) {
+      // Get the user messages
+      const userMessages = messages.filter(msg => msg.role === 'user');
+      const selectedMessage = userMessages[selectedMessageIndex];
+      
+      // Delete everything after this message and set input to the selected message
+      if (selectedMessage) {
+        // Find the index of the selected message in the full messages array
+        const selectedMessageFullIndex = messages.findIndex(
+          (msg, idx) => msg.role === 'user' && 
+                       messages.slice(0, idx + 1).filter(m => m.role === 'user').length === selectedMessageIndex + 1
+        );
+        
+        // If found, delete everything after it AND the selected message itself, then set input text
+        if (selectedMessageFullIndex !== -1) {
+          // Delete the selected message and all messages after it
+          setMessages(messages.slice(0, selectedMessageFullIndex));
+          
+          // Set the input text to the selected message content
+          setInputText(selectedMessage.content);
+        }
+      }
+      
+      // Exit history mode
       setIsHistoryMode(false);
       setSelectedMessageIndex(null);
       return true;

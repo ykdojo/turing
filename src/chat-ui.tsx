@@ -173,6 +173,7 @@ export const ChatApp = () => {
             {`Showing message ${selectedMessageIndex + 1} of ${userMessages.length}`}
             {selectedMessageIndex < userMessages.length - 1 && 
               ` (${userMessages.length - selectedMessageIndex - 1} more hidden)`}
+            {` - Press Enter to select and edit this message`}
           </Text>
         </Box>
       )}
@@ -180,7 +181,7 @@ export const ChatApp = () => {
       {/* Input prompt with cursor indicator or history mode indicator */}
       <Box borderStyle="single" borderColor={isHistoryMode ? "magenta" : "gray"} padding={1}>
         {isHistoryMode ? (
-          <Text color="magenta">HISTORY MODE (Press ESC to exit, ↑/↓ to navigate, Enter to return)</Text>
+          <Text color="magenta">HISTORY MODE (Press ESC to exit, ↑/↓ to navigate, Enter to select message)</Text>
         ) : (
           <Text>{`> ${inputText}`}<Text backgroundColor="white"> </Text></Text>
         )}
