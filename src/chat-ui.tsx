@@ -177,13 +177,15 @@ export const ChatApp = () => {
       )}
       
       {/* Input prompt with cursor indicator or history mode indicator */}
-      <Box padding={1}>
-        {isHistoryMode ? (
+      {isHistoryMode ? (
+        <Box justifyContent="center" padding={1}>
           <Text color="yellow">HISTORY MODE (Press ESC to exit, ↑/↓ to navigate, Enter to select message)</Text>
-        ) : (
+        </Box>
+      ) : (
+        <Box padding={1}>
           <Text>{`> ${inputText}`}<Text backgroundColor="white"> </Text></Text>
-        )}
-      </Box>
+        </Box>
+      )}
     </Box>
   );
 };
