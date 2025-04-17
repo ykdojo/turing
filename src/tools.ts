@@ -1,6 +1,3 @@
-import { Type } from "@google/genai";
-
-// Tool interfaces and types
 export interface ToolDefinition {
   functionDeclarations: FunctionDeclaration[];
 }
