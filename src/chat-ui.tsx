@@ -75,7 +75,7 @@ export const ChatApp = () => {
                 marginY={1} 
                 flexDirection="column"
                 borderStyle={isSelected ? "round" : undefined}
-                borderColor={isSelected ? "blue" : undefined}
+                borderColor={isSelected ? "yellow" : undefined}
               >
                 <Text bold color={message.role === 'user' ? 
                   (isHistoryMode && !isSelected ? 'gray' : 'gray') : 'white'}>
@@ -169,7 +169,7 @@ export const ChatApp = () => {
       {/* Show message count when in history mode */}
       {isHistoryMode && selectedMessageIndex !== null && (
         <Box justifyContent="center" marginY={1}>
-          <Text color="blue">
+          <Text color="yellow">
             {`Showing message ${selectedMessageIndex + 1} of ${userMessages.length}`}
             {selectedMessageIndex < userMessages.length - 1 && 
               ` (${userMessages.length - selectedMessageIndex - 1} more hidden)`}
@@ -179,9 +179,9 @@ export const ChatApp = () => {
       )}
       
       {/* Input prompt with cursor indicator or history mode indicator */}
-      <Box borderStyle="single" borderColor={isHistoryMode ? "blue" : "gray"} padding={1}>
+      <Box borderStyle="single" borderColor={isHistoryMode ? "yellow" : "gray"} padding={1}>
         {isHistoryMode ? (
-          <Text color="blue">HISTORY MODE (Press ESC to exit, ↑/↓ to navigate, Enter to select message)</Text>
+          <Text color="yellow">HISTORY MODE (Press ESC to exit, ↑/↓ to navigate, Enter to select message)</Text>
         ) : (
           <Text>{`> ${inputText}`}<Text backgroundColor="white"> </Text></Text>
         )}
