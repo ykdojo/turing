@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+
 export interface ToolDefinition {
   functionDeclarations: FunctionDeclaration[];
 }
@@ -92,7 +94,7 @@ export class TerminalCommandHandler implements ToolHandler {
 export class FileEditHandler implements ToolHandler {
   async handleFunctionCall(args: { filePath: string, searchString: string, replaceString: string }): Promise<string> {
     try {
-      const fs = require('fs');
+      // fs is already imported at the top of the file
       const { filePath, searchString, replaceString } = args;
       
       // Check if file exists

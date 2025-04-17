@@ -1,5 +1,6 @@
 import { GeminiAPI } from '../gemini-api.js';
 import fs from 'node:fs';
+import { executeCommand } from './terminal-service.js';
 
 // Function to execute a file edit operation and handle function call loop
 export function editFile(
@@ -177,7 +178,7 @@ async function handleResult(
           setTimeout(() => {
             // Execute the appropriate function based on the function name
             if (call.name === "runTerminalCommand") {
-              const { executeCommand } = require('./terminal-service.js');
+              // executeCommand is already imported at the top of the file
               executeCommand(
                 call.args.command,
                 commandDetails.msgIndex,
