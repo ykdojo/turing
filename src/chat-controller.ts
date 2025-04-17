@@ -304,6 +304,26 @@ export function useChatController() {
       const selectedMessage = messages[selectedMessageIndex].content;
       setInputText(selectedMessage);
       
+      // Remove the selected message and all messages after it
+      setMessages(prevMessages => {
+        // Keep only messages before the selected message
+        return prevMessages.slice(0, selectedMessageIndex);
+      });
+      
+      // Also update the chat history state to match
+      setChatHistory(prevHistory => {
+        // Find the corresponding position in the chat history
+        // Each user message has a corresponding model response, so we need to calculate
+        // the position in the chat history carefully
+        const userMessagesBeforeSelected = messages
+          .slice(0, selectedMessageIndex)
+          .filter(msg => msg.role === 'user').length;
+          
+        // Each user message takes 2 entries in the chat history (user + model)
+        // So we keep only the entries before the selected user message
+        return prevHistory.slice(0, userMessagesBeforeSelected * 2);
+      });
+      
       // Exit history mode
       setIsHistoryMode(false);
     }
