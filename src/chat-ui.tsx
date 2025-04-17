@@ -74,8 +74,6 @@ export const ChatApp = () => {
                 key={index} 
                 marginY={1} 
                 flexDirection="column"
-                borderStyle={isSelected ? "round" : undefined}
-                borderColor={isSelected ? "yellow" : undefined}
               >
                 <Text bold color={message.role === 'user' ? 
                   (isHistoryMode && !isSelected ? 'gray' : 'gray') : 'white'}>
@@ -179,7 +177,7 @@ export const ChatApp = () => {
       )}
       
       {/* Input prompt with cursor indicator or history mode indicator */}
-      <Box borderStyle="single" borderColor={isHistoryMode ? "yellow" : "gray"} padding={1}>
+      <Box padding={1}>
         {isHistoryMode ? (
           <Text color="yellow">HISTORY MODE (Press ESC to exit, ↑/↓ to navigate, Enter to select message)</Text>
         ) : (
