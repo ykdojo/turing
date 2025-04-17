@@ -75,13 +75,13 @@ export const ChatApp = () => {
                 marginY={1} 
                 flexDirection="column"
                 borderStyle={isSelected ? "round" : undefined}
-                borderColor={isSelected ? "magenta" : undefined}
+                borderColor={isSelected ? "blue" : undefined}
               >
                 <Text bold color={message.role === 'user' ? 
-                  (isHistoryMode && !isSelected ? 'gray' : 'green') : 'blue'}>
+                  (isHistoryMode && !isSelected ? 'gray' : 'green') : 'cyan'}>
                   {message.role === 'user' ? 
-                    (isSelected ? '▶️ You:' : '🧑 You:') : 
-                    '🤖 AI:'}
+                    (isSelected ? '> You:' : '> You:') : 
+                    '>> Amp:'}
                 </Text>
                 <Box marginLeft={2}>
                   {message.isLoading ? (
@@ -93,7 +93,8 @@ export const ChatApp = () => {
                     <Box flexDirection="column">
                       <Text 
                         wrap="wrap" 
-                        color={isHistoryMode && message.role === 'user' && !isSelected ? 'gray' : undefined}
+                        color={isHistoryMode && !isSelected ? 'gray' : 
+                               message.role === 'user' ? 'green' : 'cyan'}
                       >
                         {message.content}
                       </Text>
@@ -169,7 +170,7 @@ export const ChatApp = () => {
       {/* Show message count when in history mode */}
       {isHistoryMode && selectedMessageIndex !== null && (
         <Box justifyContent="center" marginY={1}>
-          <Text color="magenta">
+          <Text color="blue">
             {`Showing message ${selectedMessageIndex + 1} of ${userMessages.length}`}
             {selectedMessageIndex < userMessages.length - 1 && 
               ` (${userMessages.length - selectedMessageIndex - 1} more hidden)`}
@@ -179,9 +180,9 @@ export const ChatApp = () => {
       )}
       
       {/* Input prompt with cursor indicator or history mode indicator */}
-      <Box borderStyle="single" borderColor={isHistoryMode ? "magenta" : "gray"} padding={1}>
+      <Box borderStyle="single" borderColor={isHistoryMode ? "blue" : "gray"} padding={1}>
         {isHistoryMode ? (
-          <Text color="magenta">HISTORY MODE (Press ESC to exit, ↑/↓ to navigate, Enter to select message)</Text>
+          <Text color="blue">HISTORY MODE (Press ESC to exit, ↑/↓ to navigate, Enter to select message)</Text>
         ) : (
           <Text>{`> ${inputText}`}<Text backgroundColor="white"> </Text></Text>
         )}
