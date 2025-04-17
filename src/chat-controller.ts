@@ -331,10 +331,10 @@ export function useChatController() {
       
       // Also update the chat history state to match
       setChatHistory(prevHistory => {
-        // Each user message typically has a corresponding response
-        // Cut the history to match the kept user messages
-        const userMessagesKept = userMessageIndices.length;
-        return prevHistory.slice(0, userMessagesKept * 2);
+        // Calculate exact number of user-response pairs to preserve
+        // This should match exactly with the messages we're keeping
+        const userResponsePairs = Math.floor(keepUpToIndex / 2);
+        return prevHistory.slice(0, userResponsePairs * 2);
       });
       
       // Exit history mode
