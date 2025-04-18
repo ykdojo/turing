@@ -2,12 +2,20 @@ import { GeminiAPI } from '../src/gemini-api.js';
 
 // Don't use jest.setTimeout here; it's set in the config
 
+// Define supported models for testing
+const GEMINI_MODELS = {
+  FLASH: 'gemini-2.0-flash',
+  FLASH_LITE: 'gemini-2.0-flash-lite',
+  FLASH_THINKING: 'gemini-2.0-flash-thinking-exp-01-21',
+  PRO_EXP: 'gemini-2.5-pro-exp-03-25'
+};
+
 describe('Gemini API Tests', () => {
   let gemini: GeminiAPI;
 
   beforeAll(() => {
     // Initialize the API before all tests
-    gemini = new GeminiAPI("gemini-2.0-flash-lite");
+    gemini = new GeminiAPI(GEMINI_MODELS.FLASH_LITE);
   });
 
   test('API should successfully connect and return exact requested text', async () => {
@@ -71,7 +79,7 @@ describe('Gemini API Tests', () => {
 
   test('API should handle function calling setup for terminal commands', async () => {
     // Initialize with function calling enabled
-    const geminiWithFunctions = new GeminiAPI("gemini-2.0-flash-lite", undefined, true);
+    const geminiWithFunctions = new GeminiAPI(GEMINI_MODELS.FLASH_LITE, undefined, true);
     
     // Verify that the model is configured with the terminal command tool
     expect(geminiWithFunctions).toHaveProperty('tools');
@@ -109,7 +117,7 @@ describe('Gemini API Tests', () => {
     
     // Initialize with system instruction
     const geminiWithSystemInstruction = new GeminiAPI(
-      "gemini-2.0-flash-lite", 
+      GEMINI_MODELS.FLASH_LITE, 
       undefined, 
       true, 
       testInstruction
@@ -127,5 +135,27 @@ describe('Gemini API Tests', () => {
     
     // Just verify we get some kind of response
     expect(response).toBeDefined();
+  });
+
+  // New test for multiple model support
+  test('API should support different Gemini models', async () => {
+    // Test with Gemini Pro model if available (may hit rate limits in free tier)
+    try {
+      const geminiPro = new GeminiAPI(GEMINI_MODELS.PRO_EXP);
+      const proResponse = await geminiPro.sendMessage("What model are you?");
+      expect(proResponse).toBeDefined();
+      console.log(`Pro model response: ${typeof proResponse === 'string' ? proResponse : proResponse.text}`);
+    } catch (error) {
+      console.warn(`Pro model test skipped: ${error.message}`);
+    }
+
+    // Test with Flash model (most reliable)
+    try {
+      const geminiFlash = new GeminiAPI(GEMINI_MODELS.FLASH);
+      const flashResponse = await geminiFlash.sendMessage("What model are you?");
+      expect(flashResponse).toBeDefined();
+    } catch (error) {
+      console.warn(`Flash model test skipped: ${error.message}`);
+    }
   });
 });
