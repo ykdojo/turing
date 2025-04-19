@@ -7,6 +7,13 @@ describe('GeminiSDK Function Calling Tests', () => {
   // Skip if running in CI environment (API key might not be available)
   const runApiTests = !process.env.CI;
   
+  // Models that support function calling according to GEMINI_MODELS.md
+  const functionCallingModels = [
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-2.5-pro-exp-03-25'
+  ];
+  
   test('GeminiSDK class should be properly initialized', () => {
     expect(() => {
       new GeminiSDK('gemini-2.0-flash');
@@ -33,67 +40,70 @@ describe('GeminiSDK Function Calling Tests', () => {
     expect(sdk).toBeDefined();
   });
   
-  (runApiTests ? test : test.skip)('GeminiSDK should perform function calls using AI SDK', async () => {
-    // Skip if no API key is available
-    if (!process.env.GEMINI_API_KEY) {
-      console.log('Skipping test: GEMINI_API_KEY not available');
-      return;
-    }
-    
-    // Define the weather tool
-    const weatherTool = tool({
-      description: 'Get the weather in a location',
-      parameters: z.object({
-        location: z.string().describe('The location to get the weather for'),
-      }),
-      execute: async ({ location }) => ({
-        location,
-        temperature: 72 + Math.floor(Math.random() * 21) - 10,
-        condition: 'Sunny',
-        humidity: '45%'
-      }),
-    });
-    
-    // Create the GeminiSDK with tools
-    const gemini = new GeminiSDK(
-      'gemini-2.0-flash',
-      { weather: weatherTool },
-      'required', // Force tool usage
-      2 // Allow up to 2 steps
-    );
-    
-    // Send a message that should trigger a tool call
-    const result = await gemini.getToolResults('What is the weather in San Francisco?');
-    
-    // Verify we got a response (text might be empty depending on model behavior)
-    expect(result.text).toBeDefined();
-    
-    // Verify tool calls and results
-    expect(result.toolCalls.length).toBeGreaterThanOrEqual(1);
-    
-    // Check if at least one tool call is for weather
-    const weatherCall = result.toolCalls.find(
-      call => call.toolName === 'weather' && 
-      call.args && 
-      call.args.location && 
-      call.args.location.toLowerCase().includes('san francisco')
-    );
-    
-    expect(weatherCall).toBeDefined();
-    
-    // Verify at least one tool result exists
-    expect(result.toolResults.length).toBeGreaterThanOrEqual(1);
-    
-    // Find the matching tool result
-    const weatherResult = result.toolResults.find(
-      res => res.toolName === 'weather' && res.result
-    );
-    
-    expect(weatherResult).toBeDefined();
-    if (weatherResult) {
-      expect(weatherResult.result).toHaveProperty('temperature');
-    }
-  }, 30000); // Increase timeout to 30 seconds for API call
+  // Test function calling with each supported model from GEMINI_MODELS.md
+  describe.each(functionCallingModels)('Function calling with model: %s', (modelName) => {
+    (runApiTests ? test : test.skip)(`should perform function calls using model ${modelName}`, async () => {
+      // Skip if no API key is available
+      if (!process.env.GEMINI_API_KEY) {
+        console.log('Skipping test: GEMINI_API_KEY not available');
+        return;
+      }
+      
+      // Define the weather tool
+      const weatherTool = tool({
+        description: 'Get the weather in a location',
+        parameters: z.object({
+          location: z.string().describe('The location to get the weather for'),
+        }),
+        execute: async ({ location }) => ({
+          location,
+          temperature: 72 + Math.floor(Math.random() * 21) - 10,
+          condition: 'Sunny',
+          humidity: '45%'
+        }),
+      });
+      
+      // Create the GeminiSDK with tools
+      const gemini = new GeminiSDK(
+        modelName,
+        { weather: weatherTool },
+        'required', // Force tool usage
+        2 // Allow up to 2 steps
+      );
+      
+      // Send a message that should trigger a tool call
+      const result = await gemini.getToolResults('What is the weather in San Francisco?');
+      
+      // Verify we got a response (text might be empty depending on model behavior)
+      expect(result.text).toBeDefined();
+      
+      // Verify tool calls and results
+      expect(result.toolCalls.length).toBeGreaterThanOrEqual(1);
+      
+      // Check if at least one tool call is for weather
+      const weatherCall = result.toolCalls.find(
+        call => call.toolName === 'weather' && 
+        call.args && 
+        call.args.location && 
+        call.args.location.toLowerCase().includes('san francisco')
+      );
+      
+      expect(weatherCall).toBeDefined();
+      
+      // Verify at least one tool result exists
+      expect(result.toolResults.length).toBeGreaterThanOrEqual(1);
+      
+      // Find the matching tool result
+      const weatherResult = result.toolResults.find(
+        res => res.toolName === 'weather' && res.result
+      );
+      
+      expect(weatherResult).toBeDefined();
+      if (weatherResult) {
+        expect(weatherResult.result).toHaveProperty('temperature');
+      }
+    }, 45000); // Increase timeout to 45 seconds for API call (some models may be slower)
+  });
   
   (runApiTests ? test : test.skip)('AI SDK tool calling should work directly with generateText', async () => {
     // Skip if no API key is available
@@ -141,7 +151,7 @@ describe('GeminiSDK Function Calling Tests', () => {
     });
     
     expect(weatherCall).toBeDefined();
-  }, 30000); // Increase timeout to 30 seconds for API call
+  }, 30000); // 30 second timeout for API call
   
   (runApiTests ? test : test.skip)('GeminiSDK should support terminal command tool', async () => {
     // Skip if no API key is available
@@ -209,5 +219,5 @@ describe('GeminiSDK Function Calling Tests', () => {
         expect(cmdResult.result).toHaveProperty('exitCode');
       }
     }
-  }, 30000); // Increase timeout to 30 seconds for API call
+  }, 30000); // 30 second timeout for API call
 });
