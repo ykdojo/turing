@@ -7,3 +7,4 @@
 - Run tests before committing any changes with `npm test`
 - Use `npm run test` to verify Gemini API functionality (tests pass with explicit model name requirement)
 - For Gemini function calling, always use mode "AUTO" (not "ANY") in the toolConfig
+- Never implement mocking or simulations without asking for approval first
