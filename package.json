@@ -17,8 +17,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@ai-sdk/google": "^1.2.12",
     "@google/genai": "^0.8.0",
     "@types/react": "^19.1.1",
+    "ai": "^4.3.9",
     "dotenv": "^16.5.0",
     "ink": "^5.2.0",
     "ink-spinner": "^5.0.0",

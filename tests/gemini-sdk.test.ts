@@ -1,17 +1,18 @@
 import { GeminiSDK } from '../src/gemini-sdk.js';
 
 describe('GeminiSDK Tests', () => {
-  let gemini: GeminiSDK;
+  const testKeyword = "GEMINI_SDK_TEST";
+  const testPrompt = `Return ONLY the word ${testKeyword} with no other text.`;
+  
+  const models = [
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-2.5-pro-exp-03-25'
+  ];
 
-  beforeAll(() => {
-    gemini = new GeminiSDK('gemini-1.5-pro-latest');
-  });
-
-  test('Should successfully connect and get a response', async () => {
-    const testKeyword = "GEMINI_SDK_TEST";
-    const response = await gemini.sendMessage(
-      `Return ONLY the word ${testKeyword} with no other text.`
-    );
+  test.each(models)('Should connect and get response from %s', async (modelName) => {
+    const gemini = new GeminiSDK(modelName);
+    const response = await gemini.sendMessage(testPrompt);
     
     expect(response.trim()).toBe(testKeyword);
   });
