@@ -8,3 +8,5 @@
 - Use `npm run test` to verify Gemini API functionality (tests pass with explicit model name requirement)
 - For Gemini function calling, always use mode "AUTO" (not "ANY") in the toolConfig
 - Never implement mocking or simulations without asking for approval first
+- For DeepSeek streaming implementation, follow the step-by-step plan in `DEEPSEEK_STREAMING_PLAN.md`
+- Using real API calls in tests is acceptable and expected - follow the pattern in the Gemini tests that checks for API key presence and skips tests if not available
