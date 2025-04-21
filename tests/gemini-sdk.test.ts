@@ -7,7 +7,7 @@ describe('GeminiSDK Tests', () => {
   const models = [
     'gemini-2.0-flash',
     'gemini-2.0-flash-lite',
-    'gemini-2.5-pro-exp-03-25'
+    'gemini-2.5-flash-preview-04-17'
   ];
 
   test.each(models)('Should connect and get response from %s', async (modelName) => {

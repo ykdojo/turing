@@ -1,6 +1,12 @@
 # Changelog
 
-## [2025-04-16] - Latest
+## [2025-04-21] - Latest
+
+### Changed
+- Updated to use `gemini-2.5-flash-preview-04-17` model (faster with higher quota) instead of `gemini-2.5-pro-exp-03-25`
+- Updated GEMINI_MODELS.md with latest model information
+
+## [2025-04-16]
 
 ### Fixed
 - Improved system instructions to encourage proactive command execution without asking for permission

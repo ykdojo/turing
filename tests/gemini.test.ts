@@ -7,7 +7,7 @@ const GEMINI_MODELS = {
   FLASH: 'gemini-2.0-flash',
   FLASH_LITE: 'gemini-2.0-flash-lite',
   FLASH_THINKING: 'gemini-2.0-flash-thinking-exp-01-21',
-  PRO_EXP: 'gemini-2.5-pro-exp-03-25'
+  FLASH_PREVIEW: 'gemini-2.5-flash-preview-04-17'
 };
 
 describe('Gemini API Tests', () => {
@@ -141,7 +141,7 @@ describe('Gemini API Tests', () => {
   test('API should support different Gemini models', async () => {
     // Test with Gemini Pro model if available (may hit rate limits in free tier)
     try {
-      const geminiPro = new GeminiAPI(GEMINI_MODELS.PRO_EXP);
+      const geminiPro = new GeminiAPI(GEMINI_MODELS.FLASH_PREVIEW);
       const proResponse = await geminiPro.sendMessage("What model are you?");
       expect(proResponse).toBeDefined();
       console.log(`Pro model response: ${typeof proResponse === 'string' ? proResponse : proResponse.text}`);
