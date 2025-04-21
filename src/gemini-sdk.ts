@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import { google } from '@ai-sdk/google';
-import { generateText, tool, Tool, ToolSet } from 'ai';
-import { z } from 'zod';
+import { generateText, ToolSet } from 'ai';
 
 // AI SDK requires GOOGLE_GENERATIVE_AI_API_KEY environment variable
 // Map from our existing GEMINI_API_KEY for compatibility
