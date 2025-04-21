@@ -40,8 +40,8 @@ describe('GeminiStreamingSDK', () => {
     expect(combinedChunks).toEqual(finalText);
   }, 30000); // 30 second timeout for API call
 
-  // Skip the tool calls test for now - we'll need to debug the underlying issue separately
-  it.skip('should stream tool calls', async () => {
+  // Try the tool calls test
+  it('should stream tool calls', async () => {
     if (!runTests) {
       console.log('Skipping test: GEMINI_API_KEY not available');
       return;
