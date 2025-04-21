@@ -3,6 +3,12 @@ import { google } from '@ai-sdk/google';
 import { streamText, ToolSet, TextStreamPart } from 'ai';
 import { ReadableStream } from 'stream/web';
 
+// Define a type for the stream to avoid repeating complex types
+type TextAndPartStreams = {
+  textStream: AsyncIterable<string>;
+  fullStream: AsyncIterable<TextStreamPart<ToolSet>>;
+};
+
 // AI SDK requires GOOGLE_GENERATIVE_AI_API_KEY environment variable
 // Map from our existing GEMINI_API_KEY for compatibility
 process.env.GOOGLE_GENERATIVE_AI_API_KEY = process.env.GEMINI_API_KEY;
@@ -33,8 +39,8 @@ export class GeminiStreamingSDK {
    * Returns both text stream for simple consumption and full stream for advanced use cases
    */
   streamMessage(prompt: string): {
-    textStream: AsyncIterable<string> & ReadableStream<string>;
-    fullStream: AsyncIterable<TextStreamPart> & ReadableStream<TextStreamPart>;
+    textStream: AsyncIterable<string>;
+    fullStream: AsyncIterable<TextStreamPart<ToolSet>>;
     textPromise: Promise<string>;
   } {
     const options: any = {
@@ -71,8 +77,8 @@ export class GeminiStreamingSDK {
    * Returns detailed streams with tool call information
    */
   streamToolCalls(prompt: string): {
-    textStream: AsyncIterable<string> & ReadableStream<string>;
-    fullStream: AsyncIterable<TextStreamPart> & ReadableStream<TextStreamPart>;
+    textStream: AsyncIterable<string>;
+    fullStream: AsyncIterable<TextStreamPart<ToolSet>>;
     toolCalls: Promise<any[]>;
     toolResults: Promise<any[]>;
     steps: Promise<any[]>;
@@ -148,7 +154,7 @@ export class GeminiStreamingSDK {
    * @param handlers Object with handler functions for different event types
    */
   static async consumeFullStream(
-    stream: AsyncIterable<TextStreamPart>,
+    stream: AsyncIterable<TextStreamPart<ToolSet>>,
     handlers: {
       onTextDelta?: (text: string) => void;
       onToolCall?: (toolCall: any) => void;
@@ -159,34 +165,30 @@ export class GeminiStreamingSDK {
   ): Promise<void> {
     try {
       for await (const part of stream) {
-        switch (part.type) {
-          case 'text-delta':
-            if (handlers.onTextDelta) {
-              handlers.onTextDelta(part.textDelta);
-            }
-            break;
-          case 'tool-call':
-            if (handlers.onToolCall) {
-              handlers.onToolCall(part);
-            }
-            break;
-          case 'tool-result':
-            if (handlers.onToolResult) {
-              handlers.onToolResult(part);
-            }
-            break;
-          case 'finish':
-            if (handlers.onFinish) {
-              handlers.onFinish(part);
-            }
-            break;
-          case 'error':
-            if (handlers.onError) {
-              handlers.onError(part.error);
-            } else {
-              console.error('Stream error:', part.error);
-            }
-            break;
+        // Handle different part types from the stream
+        if (part.type === 'text-delta') {
+          if (handlers.onTextDelta) {
+            handlers.onTextDelta(part.textDelta);
+          }
+        } else if (part.type === 'tool-call') {
+          if (handlers.onToolCall) {
+            handlers.onToolCall(part);
+          }
+        // Handle tool-result type (using type assertion since it might not be in the type definition)
+        } else if ((part as any).type === 'tool-result') {
+          if (handlers.onToolResult) {
+            handlers.onToolResult(part);
+          }
+        } else if (part.type === 'finish') {
+          if (handlers.onFinish) {
+            handlers.onFinish(part);
+          }
+        } else if (part.type === 'error') {
+          if (handlers.onError) {
+            handlers.onError((part as any).error);
+          } else {
+            console.error('Stream error:', (part as any).error);
+          }
         }
       }
     } catch (error) {

@@ -7,10 +7,11 @@ yarn-error.log*
 # Build output
 dist/
 
-# Compiled test files
+# Compiled TypeScript files
 *-test.js
 *.test.js
-# But keep the TypeScript test source files
+scripts/*.js
+# But keep the TypeScript source files
 
 # Editor and OS files
 .DS_Store
