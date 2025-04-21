@@ -1,13 +1,6 @@
 import 'dotenv/config';
 import { google } from '@ai-sdk/google';
 import { streamText, ToolSet, TextStreamPart } from 'ai';
-import { ReadableStream } from 'stream/web';
-
-// Define a type for the stream to avoid repeating complex types
-type TextAndPartStreams = {
-  textStream: AsyncIterable<string>;
-  fullStream: AsyncIterable<TextStreamPart<ToolSet>>;
-};
 
 // AI SDK requires GOOGLE_GENERATIVE_AI_API_KEY environment variable
 // Map from our existing GEMINI_API_KEY for compatibility
