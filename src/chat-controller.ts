@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { useState } from 'react';
 import { GeminiAPI } from './gemini-api.js';
 import { formatMessagesForGeminiAPI, Message as FormatterMessage } from './utils/message-formatter.js';
