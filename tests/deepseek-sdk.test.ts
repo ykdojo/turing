@@ -4,8 +4,9 @@ import { tool, generateText } from 'ai';
 import { deepseek } from '@ai-sdk/deepseek';
 import { jest } from '@jest/globals';
 
-// Using individual test.skip to exclude these tests from the automatic test suite
-// To run manually: npx jest tests/deepseek-sdk.test.ts --testNamePattern="DeepseekSDK"
+// Tests that make actual API calls are skipped by default to save on API costs
+// To run all tests including API calls: npx jest tests/deepseek-sdk.test.ts --runInBand
+// To run only a specific test: npx jest tests/deepseek-sdk.test.ts --testNamePattern="should connect and get response"
 describe('DeepseekSDK', () => {
   // Mock environment variables
   const originalEnv = process.env;
@@ -57,7 +58,7 @@ describe('DeepseekSDK', () => {
       expect(sdk.sendMessage).toBeDefined();
     });
     
-    it('should connect and get response from deepseek-v3', async () => {
+    it.skip('should connect and get response from deepseek-v3 (makes API call)', async () => {
       // Skip the test if we can't get a valid API key
       if (!process.env.DEEPSEEK_API_KEY) {
         console.log('Skipping test: DEEPSEEK_API_KEY not available');
@@ -82,7 +83,7 @@ describe('DeepseekSDK', () => {
       );
     });
     
-    it('should get tool results when tools are provided', async () => {
+    it.skip('should get tool results when tools are provided (makes API call)', async () => {
       // Skip the test if we can't get a valid API key
       if (!process.env.DEEPSEEK_API_KEY) {
         console.log('Skipping test: DEEPSEEK_API_KEY not available');
@@ -146,7 +147,7 @@ describe('DeepseekSDK', () => {
       }
     }, 30000);
     
-    it('should support terminal command tool', async () => {
+    it.skip('should support terminal command tool (makes API call)', async () => {
       // Skip if no API key is available
       if (!process.env.DEEPSEEK_API_KEY) {
         console.log('Skipping test: DEEPSEEK_API_KEY not available');
@@ -215,7 +216,7 @@ describe('DeepseekSDK', () => {
     }, 30000); // 30 second timeout for API call
   });
   
-  it('AI SDK tool calling should work directly with generateText', async () => {
+  it.skip('AI SDK tool calling should work directly with generateText (makes API call)', async () => {
     // Skip if no API key is available
     if (!process.env.DEEPSEEK_API_KEY) {
       console.log('Skipping test: DEEPSEEK_API_KEY not available');
