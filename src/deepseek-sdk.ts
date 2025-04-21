@@ -9,7 +9,7 @@ export class DeepseekSDK {
   private maxSteps: number;
 
   constructor(
-    modelName: string = 'deepseek-v3',
+    modelName: string = 'deepseek-chat',
     tools?: ToolSet,
     toolChoice?: 'auto' | 'required' | 'none',
     maxSteps: number = 2
