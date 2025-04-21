@@ -91,7 +91,7 @@ export class GeminiSDK {
     } catch (error) {
       console.error('Error in getToolResults:', error);
       return {
-        text: `Error: ${error.message}`,
+        text: `Error: ${error instanceof Error ? error.message : String(error)}`,
         steps: [],
         toolCalls: [],
         toolResults: []
