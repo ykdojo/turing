@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { deepseek } from '@ai-sdk/deepseek';
 import { streamText, ToolSet, TextStreamPart } from 'ai';
 
+// Use named export and default export both for compatibility
 export class DeepseekStreamingSDK {
   public readonly modelName: string;
   private tools?: ToolSet;
@@ -205,3 +206,6 @@ export class DeepseekStreamingSDK {
     }
   }
 }
+
+// Add default export for compatibility with ESM imports
+export default DeepseekStreamingSDK;
