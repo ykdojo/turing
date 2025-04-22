@@ -8,6 +8,19 @@ import { z } from 'zod';
 
 export type Message = FormatterMessage;
 
+// Define interfaces for our function calls
+interface FunctionCallArgs {
+  command: string;
+  isSafe: boolean;
+}
+
+interface FunctionCall {
+  name: string;
+  args: FunctionCallArgs;
+  result?: string;
+  executed?: boolean;
+}
+
 // System instruction for the Turing terminal assistant
 const SYSTEM_INSTRUCTION = `You are a helpful terminal assistant in the Turing application, working in the directory: ${process.cwd()}. Be proactive and run commands immediately when they would help answer the user's question. Never ask for permission in your text responses. Your job is to be efficient and helpful with minimal back-and-forth. Focus on being direct and concise when responding to user queries.`;
 
@@ -82,10 +95,10 @@ export function useChatController() {
       const msg = messages[msgIndex];
       if (msg?.functionCalls) {
         const callIndex = msg.functionCalls.findIndex((call) => 
-          !call.args.isSafe && !call.executed);
+          call.args && !call.args.isSafe && !call.executed);
         
         if (callIndex !== -1) {
-          const command = msg.functionCalls[callIndex].args.command;
+          const command = msg.functionCalls[callIndex]?.args?.command;
           // Pass the chat session if available for continuity
           executeCommand(
             command, 
@@ -127,19 +140,48 @@ export function useChatController() {
       // Get response with possible tool calls
       geminiSdk.getToolResults(userMessage, formattedMessages)
         .then(response => {
+          // Debug: Log the raw tool calls format
+          if (response.toolCalls && response.toolCalls.length > 0) {
+            console.log("Raw tool call format:", JSON.stringify(response.toolCalls[0], null, 2));
+          }
+          
           // Check if response has tool calls
           if (response.toolCalls && response.toolCalls.length > 0) {
             // Store the response steps for potential ongoing tool calls
             const steps = response.steps;
             
             // Map tool calls to our format
-            const formattedToolCalls = response.toolCalls.map(call => {
-              const toolName = Object.keys(call)[0];
-              const args = call[toolName];
+            const formattedToolCalls: FunctionCall[] = response.toolCalls.map(call => {
+              // Handle both AI SDK 'type' format and conventional format
+              let toolName = 'runTerminalCommand'; // Default to our expected tool name
+              let command = 'ls'; // Default to a safe command
+              let isSafe = true;  // Default to safe
+              
+              if (call.type === 'tool-call' && call.toolName) {
+                // This is the AI SDK format with a type field
+                toolName = call.toolName;
+                if (call.args) {
+                  // Extract command and safety from args
+                  command = call.args.command || 'ls';
+                  isSafe = typeof call.args.isSafe === 'boolean' ? call.args.isSafe : true;
+                }
+              } else {
+                // Try to extract from object keys (old format)
+                const firstKey = Object.keys(call)[0];
+                if (firstKey && firstKey !== 'type') {
+                  toolName = firstKey;
+                  const callArgs = call[firstKey] || {};
+                  command = callArgs.command || 'ls';
+                  isSafe = typeof callArgs.isSafe === 'boolean' ? callArgs.isSafe : true;
+                }
+              }
               
               return {
                 name: toolName,
-                args: args,
+                args: { 
+                  command, 
+                  isSafe 
+                },
                 executed: false
               };
             });
@@ -159,13 +201,19 @@ export function useChatController() {
               // Set the message index for potential execution of unsafe commands
               setMessageToExecute(msgIndex);
               
+              // Debug formatted tool calls
+              console.log("Formatted tool calls:", JSON.stringify(formattedToolCalls, null, 2));
+              
               // Find tool calls marked as safe to execute automatically
               const safeToolCallIndex = formattedToolCalls.findIndex(call => 
-                call.name === 'runTerminalCommand' && call.args.isSafe);
+                call.name === 'runTerminalCommand' && call.args?.isSafe);
+              
+              console.log("Safe tool call index:", safeToolCallIndex);
                 
-              if (safeToolCallIndex !== -1) {
+              if (safeToolCallIndex !== -1 && formattedToolCalls[safeToolCallIndex].args?.command) {
                 // Run the first safe command automatically
                 const command = formattedToolCalls[safeToolCallIndex].args.command;
+                console.log("Executing command:", command);
                 // Store the command and execution details for reference
                 const commandDetails = {
                   command,

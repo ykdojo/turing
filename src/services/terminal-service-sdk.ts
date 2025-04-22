@@ -2,9 +2,22 @@ import { exec } from 'child_process';
 import { GeminiSDK } from '../gemini-sdk.js';
 import { formatMessagesForAISDK } from '../utils/message-formatter.js';
 
+// Define interfaces for our function calls
+interface FunctionCallArgs {
+  command: string;
+  isSafe: boolean;
+}
+
+interface FunctionCall {
+  name: string;
+  args: FunctionCallArgs;
+  result?: string;
+  executed?: boolean;
+}
+
 // Function to execute a terminal command and handle function call loop
 export function executeCommand(
-  command: string, 
+  command: string | undefined, 
   messageIndex: number, 
   callIndex: number, 
   chatSession: any,
@@ -16,6 +29,24 @@ export function executeCommand(
 ) {
   // Mark as pending execution
   setPendingExecution(true);
+  
+  // Check if command is defined
+  if (!command) {
+    // Handle undefined command
+    setMessages(prev => {
+      const newMsgs = [...prev];
+      if (newMsgs[messageIndex]?.functionCalls?.[callIndex]) {
+        newMsgs[messageIndex].functionCalls![callIndex].executed = true;
+        newMsgs[messageIndex].functionCalls![callIndex].result = "Error: Command not specified";
+      }
+      return newMsgs;
+    });
+    
+    // Reset states
+    setPendingExecution(false);
+    setMessageToExecute(null);
+    return;
+  }
   
   exec(command, async (error, stdout, stderr) => {
     // Prepare result
@@ -93,13 +124,37 @@ export function executeCommand(
       // Check if the response contains more function calls
       if (response.toolCalls && response.toolCalls.length > 0) {
         // Format tool calls to match our expected structure
-        const functionCalls = response.toolCalls.map(call => {
-          const toolName = Object.keys(call)[0];
-          const args = call[toolName];
+        const functionCalls: FunctionCall[] = response.toolCalls.map(call => {
+          // Handle both AI SDK 'type' format and conventional format
+          let toolName = 'runTerminalCommand'; // Default to our expected tool name
+          let command = 'ls'; // Default to a safe command
+          let isSafe = true;  // Default to safe
+          
+          if (call.type === 'tool-call' && call.toolName) {
+            // This is the AI SDK format with a type field
+            toolName = call.toolName;
+            if (call.args) {
+              // Extract command and safety from args
+              command = call.args.command || 'ls';
+              isSafe = typeof call.args.isSafe === 'boolean' ? call.args.isSafe : true;
+            }
+          } else {
+            // Try to extract from object keys (old format)
+            const firstKey = Object.keys(call)[0];
+            if (firstKey && firstKey !== 'type') {
+              toolName = firstKey;
+              const callArgs = call[firstKey] || {};
+              command = callArgs.command || 'ls';
+              isSafe = typeof callArgs.isSafe === 'boolean' ? callArgs.isSafe : true;
+            }
+          }
           
           return {
             name: toolName,
-            args: args,
+            args: { 
+              command, 
+              isSafe 
+            },
             executed: false
           };
         });
@@ -129,9 +184,9 @@ export function executeCommand(
           
           // Automatically execute safe commands
           const safeCallIndex = functionCalls.findIndex(call => 
-            call.name === 'runTerminalCommand' && call.args.isSafe);
+            call.name === 'runTerminalCommand' && call.args?.isSafe);
           
-          if (safeCallIndex !== -1) {
+          if (safeCallIndex !== -1 && functionCalls[safeCallIndex].args?.command) {
             // Run the first safe command automatically
             const command = functionCalls[safeCallIndex].args.command;
             // Store the command and execution details for reference

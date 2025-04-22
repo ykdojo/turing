@@ -63,12 +63,12 @@ export const ChatApp = () => {
                           <Text color="yellow">• {call.name}</Text>
                           <Box marginLeft={2}>
                             <Text color="cyan">Command: </Text>
-                            <Text>{call.args.command}</Text>
+                            <Text>{call.args?.command || 'No command specified'}</Text>
                           </Box>
                           <Box marginLeft={2}>
                             <Text color="cyan">Safe: </Text>
-                            <Text color={call.args.isSafe ? "green" : "red"}>
-                              {call.args.isSafe ? "Yes" : "No"}
+                            <Text color={call.args?.isSafe ? "green" : "red"}>
+                              {call.args?.isSafe ? "Yes" : "No"}
                             </Text>
                           </Box>
                           {call.executed && (
@@ -77,7 +77,7 @@ export const ChatApp = () => {
                               <Text>{call.result}</Text>
                             </Box>
                           )}
-                          {!call.args.isSafe && !call.executed && 
+                          {call.args && !call.args.isSafe && !call.executed && 
                            messageToExecute === index && (
                             <Box marginLeft={2} marginTop={1}>
                               <Text color="magenta">Press Enter to execute this command</Text>
