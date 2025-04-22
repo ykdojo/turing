@@ -3,12 +3,13 @@ import { tool } from 'ai';
 import { z } from 'zod';
 
 describe('DeepseekStreamingSDK', () => {
-  // Skip tests if API key is not available
-  const runTests = !!process.env.DEEPSEEK_API_KEY;
+  // By default, skip tests unless explicitly enabled with RUN_DEEPSEEK_TESTS=1
+  // This still requires a valid DEEPSEEK_API_KEY to be set
+  const runTests = !!process.env.DEEPSEEK_API_KEY && (process.env.RUN_DEEPSEEK_TESTS === '1');
 
   it('should stream text responses', async () => {
     if (!runTests) {
-      console.log('Skipping test: DEEPSEEK_API_KEY not available');
+      console.log('Skipping test: Enable with RUN_DEEPSEEK_TESTS=1 and valid DEEPSEEK_API_KEY');
       return;
     }
 
@@ -43,7 +44,7 @@ describe('DeepseekStreamingSDK', () => {
   // Try the tool calls test
   it('should stream tool calls', async () => {
     if (!runTests) {
-      console.log('Skipping test: DEEPSEEK_API_KEY not available');
+      console.log('Skipping test: Enable with RUN_DEEPSEEK_TESTS=1 and valid DEEPSEEK_API_KEY');
       return;
     }
 
@@ -117,7 +118,7 @@ describe('DeepseekStreamingSDK', () => {
   // Test the structure with real API calls
   it('should have correct structure for streaming with tools', async () => {
     if (!runTests) {
-      console.log('Skipping test: DEEPSEEK_API_KEY not available');
+      console.log('Skipping test: Enable with RUN_DEEPSEEK_TESTS=1 and valid DEEPSEEK_API_KEY');
       return;
     }
     
