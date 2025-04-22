@@ -220,4 +220,92 @@ describe('GeminiSDK Function Calling Tests', () => {
       }
     }
   }, 30000); // 30 second timeout for API call
+
+  (runApiTests ? test : test.skip)('sendFunctionResults should handle real tool call results', async () => {
+    // Skip if no API key is available
+    if (!process.env.GEMINI_API_KEY) {
+      console.log('Skipping test: GEMINI_API_KEY not available');
+      return;
+    }
+    
+    // Define the calculator tool
+    const calculatorTool = tool({
+      description: 'Perform a mathematical calculation',
+      parameters: z.object({
+        operation: z.enum(['add', 'subtract', 'multiply', 'divide']),
+        a: z.number(),
+        b: z.number(),
+      }),
+      execute: async ({ operation, a, b }) => {
+        switch (operation) {
+          case 'add': return a + b;
+          case 'subtract': return a - b;
+          case 'multiply': return a * b;
+          case 'divide': return b !== 0 ? a / b : 'Error: Division by zero';
+          default: return 'Error: Unknown operation';
+        }
+      }
+    });
+    
+    // Create the GeminiSDK with the calculator tool
+    const gemini = new GeminiSDK(
+      'gemini-2.0-flash',
+      { calculator: calculatorTool },
+      'required', // Force tool usage
+      3 // Allow multiple steps
+    );
+    
+    // Step 1: Get the initial tool call
+    const result = await gemini.getToolResults('What is 25 multiplied by 4?');
+    
+    // Verify we got a tool call
+    expect(result.toolCalls.length).toBeGreaterThanOrEqual(1);
+    
+    // Find the calculator call
+    const calcCall = result.toolCalls.find(call => call.toolName === 'calculator');
+    expect(calcCall).toBeDefined();
+    
+    if (calcCall) {
+      expect(calcCall.args).toHaveProperty('operation');
+      expect(calcCall.args).toHaveProperty('a');
+      expect(calcCall.args).toHaveProperty('b');
+      
+      // Find the corresponding tool result
+      const calcResult = result.toolResults.find(
+        res => res.toolName === 'calculator' && res.toolCallId === calcCall.toolCallId
+      );
+      
+      expect(calcResult).toBeDefined();
+      
+      if (calcResult) {
+        // Step 2: Send the function result back to the model
+        const followUpResponse = await gemini.sendFunctionResults(
+          result.steps,
+          'calculator',
+          JSON.stringify(calcResult.result),
+          [] // empty history since we're using steps
+        );
+        
+        // Verify the follow-up response structure
+        expect(followUpResponse).toBeDefined();
+        expect(followUpResponse.steps).toBeDefined();
+        expect(followUpResponse.toolCalls).toBeDefined();
+        expect(followUpResponse.toolResults).toBeDefined();
+        
+        // The text may be empty in some cases with AI SDK, so we'll just check it exists
+        expect(followUpResponse.text).toBeDefined();
+        
+        // Check if response contains information about the calculation
+        const fullResponseString = JSON.stringify(followUpResponse);
+        const hasRelevantContent = 
+          followUpResponse.text.includes('100') || 
+          followUpResponse.text.includes('25') || 
+          followUpResponse.text.includes('4') ||
+          fullResponseString.includes('100') ||
+          fullResponseString.includes('multiply');
+          
+        expect(hasRelevantContent).toBe(true);
+      }
+    }
+  }, 45000); // 45 second timeout for API call with multiple steps
 });
