@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { useState } from 'react';
 import { GeminiSDK } from './gemini-sdk.js';
 import { Message as FormatterMessage, formatMessagesForAISDK } from './utils/message-formatter.js';
-import { executeCommand } from './services/terminal-service.js';
+import { executeCommand } from './services/terminal-service-sdk.js';
 import { ToolSet } from 'ai';
 
 export type Message = FormatterMessage;

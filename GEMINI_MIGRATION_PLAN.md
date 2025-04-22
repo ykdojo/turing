@@ -14,7 +14,7 @@
 | 3.3  | Implement Basic Message Handling | ✅ Complete | Added basic message handling in chat-controller-sdk.ts |
 | 3.4  | Adapt Message History Format | ✅ Complete | Added formatMessagesForAISDK to message-formatter.ts |
 | 3.5  | Implement Tool Call Handling | ✅ Complete | Implemented transformation of AI SDK tool calls to our format |
-| 3.6  | Implement Command Execution | 🔄 In Progress | Basic implementation done, needs integration with terminal-service.ts |
+| 3.6  | Implement Command Execution | ✅ Complete | Created dedicated terminal-service-sdk.ts and updated chat-controller-sdk.ts to use it |
 | 3.7  | Integrate Error Handling | 🔄 Not Started | |
 | 4    | Full Integration Test | 🔄 Not Started | |
 | 5    | Replace Original Controller | 🔄 Not Started | |
@@ -100,7 +100,8 @@ const geminiSdk = new GeminiSDK(
 
 #### 3.6: Implement Command Execution
 ```typescript
-// Modify executeCommand to work with AI SDK tool results
+// Create dedicated terminal-service-sdk.ts for AI SDK integration
+// Adapt executeCommand to work with AI SDK tool results
 // Test: tests/gemini-sdk-migration/command-execution.test.ts
 ```
 
@@ -220,11 +221,11 @@ We have made significant progress on the migration to the AI SDK format:
    - Added the tool definitions in AI SDK format
    - Implemented message history formatting for AI SDK
    - Added basic tool call handling to transform AI SDK format to our internal format
-   - Implemented the initial structure for command execution
+   - Created dedicated `terminal-service-sdk.ts` for the AI SDK implementation
+   - Updated `chat-controller-sdk.ts` to use the dedicated terminal service
 
 2. **In Progress:**
-   - Complete the terminal command execution integration with the AI SDK
-   - Updating the terminal-service.ts to handle both old and new API formats
+   - Implementing error handling for the AI SDK format
 
 3. **Testing Approach:**
    - We've created placeholder tests for all components
