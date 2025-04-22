@@ -1,5 +1,7 @@
 import { exec } from 'child_process';
 import { GeminiAPI } from '../gemini-api.js';
+import { GeminiSDK } from '../gemini-sdk.js';
+import { formatMessagesForAISDK } from '../utils/message-formatter.js';
 
 // Function to execute a terminal command and handle function call loop
 export function executeCommand(
@@ -7,7 +9,7 @@ export function executeCommand(
   messageIndex: number, 
   callIndex: number, 
   chatSession: any,
-  geminiApi: GeminiAPI,
+  api: GeminiAPI | GeminiSDK,
   setMessages: (callback: (prev: any[]) => any[]) => void,
   setChatHistory: (callback: (prev: any[]) => any[]) => void,
   setPendingExecution: (value: boolean) => void,
@@ -54,9 +56,6 @@ export function executeCommand(
     ]);
     
     try {
-      // Use the existing chat session if provided, otherwise create a new one
-      const session = chatSession || geminiApi.startChat(chatSession);
-      
       // Get a fresh reference to messages for safer access
       let functionName = "runTerminalCommand"; // Default fallback
       
@@ -75,8 +74,35 @@ export function executeCommand(
         });
       }
       
-      // Send function results back to the model
-      const response = await geminiApi.sendFunctionResults(session, functionName, result);
+      // Handle function results based on API type
+      let response;
+      
+      if (api instanceof GeminiSDK) {
+        // For AI SDK implementation
+        // Get current messages to format for AI SDK
+        let messages: any[] = [];
+        setMessages(prev => {
+          messages = prev;
+          return prev;
+        });
+        
+        const { messages: formattedMessages } = formatMessagesForAISDK(messages);
+        
+        // Send function results using AI SDK format
+        response = await api.sendFunctionResults(
+          chatSession || [], // Use steps from session or empty array
+          functionName,
+          result,
+          formattedMessages
+        );
+      } else {
+        // For original Gemini API implementation
+        // Use the existing chat session if provided, otherwise create a new one
+        const session = chatSession || api.startChat(chatSession);
+        
+        // Send function results using original API format
+        response = await api.sendFunctionResults(session, functionName, result);
+      }
       
       // Check if the response contains more function calls
       if (typeof response === 'object' && response.functionCalls && response.functionCalls.length > 0) {

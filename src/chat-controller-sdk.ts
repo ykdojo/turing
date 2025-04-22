@@ -120,10 +120,10 @@ export function useChatController() {
       ]);
       
       // Format history for AI SDK
-      const formattedHistory = formatMessagesForAISDK(messages);
+      const { messages: formattedMessages, systemPrompt } = formatMessagesForAISDK(messages);
       
       // Get response with possible tool calls
-      geminiSdk.getToolResults(userMessage, formattedHistory)
+      geminiSdk.getToolResults(userMessage, formattedMessages)
         .then(response => {
           // Check if response has tool calls
           if (response.toolCalls && response.toolCalls.length > 0) {

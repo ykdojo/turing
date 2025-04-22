@@ -40,9 +40,9 @@ describe('GeminiSDK Migration - SDK Initialization', () => {
     expect(sdk).toBeInstanceOf(GeminiSDK);
   });
   
-  it('should have systemInstruction property set correctly', async () => {
+  it('should have system property set correctly', async () => {
     const modelName = 'gemini-2.0-flash';
-    const systemInstruction = 'This is a test system instruction';
+    const systemPrompt = 'This is a test system instruction';
     
     // Initialize SDK with tools
     const sdk = new GeminiSDK(
@@ -50,11 +50,11 @@ describe('GeminiSDK Migration - SDK Initialization', () => {
       createMockTerminalCommandTool(),
       'auto',
       2,
-      systemInstruction
+      systemPrompt
     );
     
-    // Access the private systemInstruction property using type assertion
+    // Access the private system property using type assertion
     const sdkAny = sdk as any;
-    expect(sdkAny.systemInstruction).toBe(systemInstruction);
+    expect(sdkAny.system).toBe(systemPrompt);
   });
 });

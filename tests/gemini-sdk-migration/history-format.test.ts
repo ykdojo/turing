@@ -34,25 +34,20 @@ describe('GeminiSDK Migration - History Format', () => {
     ];
 
     // Format for AI SDK
-    const aiSdkFormatted = formatMessagesForAISDK(messages);
+    const { messages: aiSdkFormattedMessages, systemPrompt } = formatMessagesForAISDK(messages);
 
     // Verify results
-    expect(aiSdkFormatted).toHaveLength(5); // Should filter out loading message
+    expect(aiSdkFormattedMessages).toHaveLength(4); // Should filter out loading and system messages
+    expect(systemPrompt).toBe('You are a helpful assistant');
     
-    // Check system message conversion
-    expect(aiSdkFormatted[0]).toEqual({
-      role: 'assistant',
-      content: 'You are a helpful assistant'
-    });
-    
-    // Check user message format
-    expect(aiSdkFormatted[1]).toEqual({
+    // Check first message is now the user message (system is extracted)
+    expect(aiSdkFormattedMessages[0]).toEqual({
       role: 'user',
       content: 'Hello! How are you?'
     });
     
     // Check assistant message format
-    expect(aiSdkFormatted[2]).toEqual({
+    expect(aiSdkFormattedMessages[1]).toEqual({
       role: 'assistant',
       content: 'I\'m doing well, thank you for asking. How can I help you today?'
     });
@@ -60,7 +55,9 @@ describe('GeminiSDK Migration - History Format', () => {
   
   it('should handle empty history', () => {
     const emptyHistory: Message[] = [];
-    expect(formatMessagesForAISDK(emptyHistory)).toEqual([]);
+    const { messages, systemPrompt } = formatMessagesForAISDK(emptyHistory);
+    expect(messages).toEqual([]);
+    expect(systemPrompt).toBeUndefined();
   });
   
   it('should filter out loading messages', () => {
@@ -76,8 +73,9 @@ describe('GeminiSDK Migration - History Format', () => {
       }
     ];
     
-    const formatted = formatMessagesForAISDK(messages);
+    const { messages: formatted, systemPrompt } = formatMessagesForAISDK(messages);
     expect(formatted).toHaveLength(1);
     expect(formatted[0].role).toBe('user');
+    expect(systemPrompt).toBeUndefined();
   });
 });

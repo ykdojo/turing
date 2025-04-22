@@ -11,14 +11,14 @@ export class GeminiSDK {
   private tools?: ToolSet;
   private toolChoice?: 'auto' | 'required' | 'none' | { type: 'tool'; toolName: string };
   private maxSteps: number;
-  private systemInstruction?: string;
+  private system?: string;
 
   constructor(
     modelName: string,
     tools?: ToolSet,
     toolChoice?: 'auto' | 'required' | 'none' | { type: 'tool'; toolName: string },
     maxSteps: number = 2,
-    systemInstruction?: string
+    system?: string
   ) {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY not found in environment');
@@ -27,7 +27,7 @@ export class GeminiSDK {
     this.tools = tools;
     this.toolChoice = toolChoice;
     this.maxSteps = maxSteps;
-    this.systemInstruction = systemInstruction;
+    this.system = system;
   }
 
   /**
@@ -44,9 +44,9 @@ export class GeminiSDK {
       options.history = history;
     }
 
-    // Add system instruction if provided
-    if (this.systemInstruction) {
-      options.systemInstruction = this.systemInstruction;
+    // Add system prompt if provided
+    if (this.system) {
+      options.system = this.system;
     }
 
     // Add tools if provided
@@ -96,9 +96,9 @@ export class GeminiSDK {
         options.history = history;
       }
       
-      // Add system instruction if provided
-      if (this.systemInstruction) {
-        options.systemInstruction = this.systemInstruction;
+      // Add system prompt if provided
+      if (this.system) {
+        options.system = this.system;
       }
       
       const result = await generateText(options);
@@ -162,9 +162,9 @@ export class GeminiSDK {
         options.history = history;
       }
       
-      // Add system instruction if provided
-      if (this.systemInstruction) {
-        options.systemInstruction = this.systemInstruction;
+      // Add system prompt if provided
+      if (this.system) {
+        options.system = this.system;
       }
       
       const result = await generateText(options);

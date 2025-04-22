@@ -7,12 +7,14 @@ export class DeepseekSDK {
   private tools?: ToolSet;
   private toolChoice?: 'auto' | 'required' | 'none';
   private maxSteps: number;
+  private system?: string;
 
   constructor(
     modelName: string = 'deepseek-chat',
     tools?: ToolSet,
     toolChoice?: 'auto' | 'required' | 'none',
-    maxSteps: number = 2
+    maxSteps: number = 2,
+    system?: string
   ) {
     if (!process.env.DEEPSEEK_API_KEY) {
       throw new Error('DEEPSEEK_API_KEY not found in environment');
@@ -21,6 +23,7 @@ export class DeepseekSDK {
     this.tools = tools;
     this.toolChoice = toolChoice;
     this.maxSteps = maxSteps;
+    this.system = system;
   }
 
   /**
@@ -46,6 +49,11 @@ export class DeepseekSDK {
     if (this.maxSteps > 0) {
       options.maxSteps = this.maxSteps;
     }
+    
+    // Add system prompt if provided
+    if (this.system) {
+      options.system = this.system;
+    }
 
     const { text } = await generateText(options);
     
@@ -67,13 +75,20 @@ export class DeepseekSDK {
     }
 
     try {
-      const result = await generateText({
+      const options: any = {
         model: deepseek(this.modelName),
         prompt,
         tools: this.tools,
         toolChoice: this.toolChoice,
         maxSteps: this.maxSteps || 2 // Default to 2 steps if not set
-      });
+      };
+      
+      // Add system prompt if provided
+      if (this.system) {
+        options.system = this.system;
+      }
+      
+      const result = await generateText(options);
       
       // Extract tool calls and results from all steps
       const toolCalls = result.steps.flatMap(step => step.toolCalls || []);

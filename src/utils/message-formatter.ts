@@ -57,22 +57,25 @@ export function formatMessagesForGeminiAPI(messages: Message[]): FormattedMessag
  * Formats chat messages for the AI SDK
  * - Filters out loading messages
  * - Converts our message format to AI SDK's expected format
+ * - Extracts the system prompt if present (returned as separate item)
  */
-export function formatMessagesForAISDK(messages: Message[]): any[] {
-  return messages
-    .filter(msg => !msg.isLoading) // Filter out loading messages
+export function formatMessagesForAISDK(messages: Message[]): { messages: any[], systemPrompt?: string } {
+  // Extract system message if present
+  const systemMessage = messages.find(msg => msg.role === 'system');
+  const systemPrompt = systemMessage ? systemMessage.content : undefined;
+  
+  // Filter out system messages and loading messages
+  const formattedMessages = messages
+    .filter(msg => !msg.isLoading && msg.role !== 'system') // Filter out loading and system messages
     .map(msg => {
-      // AI SDK expects 'user' or 'assistant' roles, not 'system'
-      if (msg.role === 'system') {
-        return {
-          role: 'assistant',
-          content: msg.content
-        };
-      } else {
-        return {
-          role: msg.role,
-          content: msg.content
-        };
-      }
+      return {
+        role: msg.role,
+        content: msg.content
+      };
     });
+    
+  return { 
+    messages: formattedMessages,
+    systemPrompt
+  };
 }
