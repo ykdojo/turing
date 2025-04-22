@@ -140,7 +140,7 @@ export function executeCommand(
               command,
               msgIndex,
               safeCallIndex,
-              chatSession: session // Use the current session for continuity
+              chatSession // Use the current session for continuity
             };
             
             // Use a small delay to ensure React state is updated first
@@ -151,7 +151,7 @@ export function executeCommand(
                 commandDetails.msgIndex,
                 commandDetails.safeCallIndex,
                 commandDetails.chatSession,
-                geminiApi,
+                api,
                 setMessages,
                 setChatHistory,
                 setPendingExecution,

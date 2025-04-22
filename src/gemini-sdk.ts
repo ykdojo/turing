@@ -167,15 +167,15 @@ export class GeminiSDK {
         options.system = this.system;
       }
       
-      const result = await generateText(options);
+      const response = await generateText(options);
       
       // Extract tool calls and results from all steps
-      const toolCalls = result.steps.flatMap(step => step.toolCalls || []);
-      const toolResults = result.steps.flatMap(step => step.toolResults || []);
+      const toolCalls = response.steps.flatMap(step => step.toolCalls || []);
+      const toolResults = response.steps.flatMap(step => step.toolResults || []);
       
       return {
-        text: result.text,
-        steps: result.steps,
+        text: response.text,
+        steps: response.steps,
         toolCalls,
         toolResults
       };
