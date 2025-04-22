@@ -114,44 +114,64 @@ describe('DeepseekStreamingSDK', () => {
     console.log('Final text:', finalText);
   }, 45000); // 45 second timeout for API call with tool usage
   
-  // Add a simple test that just verifies the implementation structure
-  it('should have correct structure for streaming with tools', () => {
-    // Save the original environment and set a fake API key for structural tests
-    const originalKey = process.env.DEEPSEEK_API_KEY;
-    process.env.DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || 'fake-api-key-for-testing';
-    
-    try {
-      // Define a tool
-      const dummyTool = tool({
-        name: 'dummy',
-        description: 'A dummy tool',
-        parameters: z.object({
-          input: z.string(),
-        }),
-        execute: async ({ input }) => {
-          return `Processed: ${input}`;
-        },
-      });
-      
-      // Create instance with tools
-      const sdk = new DeepseekStreamingSDK(
-        'deepseek-chat', 
-        { dummy: dummyTool },
-        'auto'
-      );
-      
-      // Verify the streamToolCalls method exists and returns the expected structure
-      const result = sdk.streamToolCalls('Test');
-      
-      expect(result).toBeDefined();
-      expect(result.textStream).toBeDefined();
-      expect(result.fullStream).toBeDefined();
-      expect(result.toolCalls).toBeDefined();
-      expect(result.toolResults).toBeDefined();
-      expect(result.textPromise).toBeDefined();
-    } finally {
-      // Restore the original API key
-      process.env.DEEPSEEK_API_KEY = originalKey;
+  // Test the structure with real API calls
+  it('should have correct structure for streaming with tools', async () => {
+    if (!runTests) {
+      console.log('Skipping test: DEEPSEEK_API_KEY not available');
+      return;
     }
-  });
+    
+    // Define a tool
+    const dummyTool = tool({
+      name: 'dummy',
+      description: 'A dummy tool',
+      parameters: z.object({
+        input: z.string(),
+      }),
+      execute: async ({ input }) => {
+        return `Processed: ${input}`;
+      },
+    });
+    
+    // Create instance with tools
+    const sdk = new DeepseekStreamingSDK(
+      'deepseek-chat', 
+      { dummy: dummyTool },
+      'auto'
+    );
+    
+    // Verify the streamToolCalls method exists and returns the expected structure
+    const result = sdk.streamToolCalls('Use the dummy tool with input "test data"');
+    
+    expect(result).toBeDefined();
+    expect(result.textStream).toBeDefined();
+    expect(result.fullStream).toBeDefined();
+    expect(result.toolCalls).toBeDefined();
+    expect(result.toolResults).toBeDefined();
+    expect(result.textPromise).toBeDefined();
+    
+    // Collect information from full stream to verify real API calls
+    const textChunks: string[] = [];
+    const toolCallsReceived: any[] = [];
+    const toolResultsReceived: any[] = [];
+    
+    await DeepseekStreamingSDK.consumeFullStream(result.fullStream, {
+      onTextDelta: (text) => {
+        textChunks.push(text);
+      },
+      onToolCall: (toolCall) => {
+        toolCallsReceived.push(toolCall);
+      },
+      onToolResult: (toolResult) => {
+        toolResultsReceived.push(toolResult);
+      }
+    });
+    
+    // Verify streaming produced some text
+    expect(textChunks.length).toBeGreaterThan(0);
+    
+    // Get final text
+    const finalText = await result.textPromise;
+    expect(finalText.length).toBeGreaterThan(0);
+  }, 45000); // 45 second timeout for API call with tool usage
 });
