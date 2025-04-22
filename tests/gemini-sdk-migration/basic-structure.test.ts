@@ -1,10 +1,5 @@
-import { describe, it, expect, jest } from '@jest/globals';
+import { describe, it, expect } from '@jest/globals';
 import * as chatControllerModule from '../../src/chat-controller-sdk.js';
-
-// For testing purposes only - this is not testing actual React hooks
-jest.mock('react', () => ({
-  useState: jest.fn((initialValue: any) => [initialValue, jest.fn()]),
-}));
 
 describe('GeminiSDK Migration - Basic Structure', () => {
   it('should check that the controller module exists and exports the required function', () => {
