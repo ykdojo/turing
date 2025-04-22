@@ -174,6 +174,7 @@ describe('Verify Terminal Command Tool Structure', () => {
 describe('Chat Controller SDK - Live API Test', () => {
   // Skip if no API key is available
   const hasApiKey = !!process.env.GEMINI_API_KEY;
+  const runApiTests = !process.env.CI;
   
   // Only run this test if API key is present
   (hasApiKey ? test : test.skip)('GeminiSDK can get simple text responses', async () => {
@@ -196,4 +197,72 @@ describe('Chat Controller SDK - Live API Test', () => {
       throw error;
     }
   }, 30000); // Allow up to 30 seconds
+  
+  (runApiTests && hasApiKey ? test : test.skip)('getToolResults can successfully process command execution requests', async () => {
+    // Skip if no API key
+    if (!hasApiKey) {
+      console.log('Skipping test: GEMINI_API_KEY not available');
+      return;
+    }
+    
+    // Import needed library
+    const { z } = await import('zod');
+    const { tool } = await import('ai');
+    
+    // Create a test terminal command tool using the AI SDK tool format
+    const terminalCommandTool = tool({
+      description: "Run a terminal command on the user's system",
+      parameters: z.object({
+        command: z.string().describe('The terminal command to execute'),
+        isSafe: z.boolean().describe('Whether the command is considered safe to run')
+      }),
+      execute: async ({ command, isSafe }) => {
+        // Mock implementation - doesn't actually run the command
+        return {
+          output: `Simulated output for command: ${command}`,
+          exitCode: 0,
+          isSafe
+        };
+      }
+    });
+    
+    // Create the GeminiSDK with tools
+    const sdk = new GeminiSDK(
+      'gemini-2.0-flash',
+      { runTerminalCommand: terminalCommandTool },
+      'auto',
+      2, // maxSteps
+      'You are a helpful terminal assistant.'
+    );
+    
+    // Send a message that should trigger a tool call
+    const result = await sdk.getToolResults('What files are in the current directory?');
+    
+    // Verify we got a response
+    expect(result).toBeDefined();
+    expect(result.steps).toBeDefined();
+    
+    // Verify toolCalls exist
+    expect(result.toolCalls.length).toBeGreaterThanOrEqual(1);
+    
+    // Find terminal command calls that include directory listing
+    const cmdCall = result.toolCalls.find(call => {
+      return call.toolName === 'runTerminalCommand' && 
+             call.args && 
+             call.args.command && 
+             (
+               call.args.command.toLowerCase().includes('ls') ||
+               call.args.command.toLowerCase().includes('dir')
+             );
+    });
+    
+    // Verify we found a command call
+    expect(cmdCall).toBeDefined();
+    
+    if (cmdCall) {
+      expect(cmdCall.args).toHaveProperty('command');
+      expect(cmdCall.args).toHaveProperty('isSafe');
+      expect(cmdCall.args.isSafe).toBe(true);
+    }
+  }, 30000); // 30 second timeout for API call
 });
