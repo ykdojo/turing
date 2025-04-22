@@ -7,14 +7,14 @@
 
 | Step | Description | Status | Notes |
 |------|-------------|--------|-------|
-| 1    | Create New Branch | ✅ Complete | Created branch `feature/migrate-to-ai-sdk` |
-| 2    | Create Test Files | 🔄 Not Started | |
-| 3.1  | Basic Structure and Imports | 🔄 Not Started | |
-| 3.2  | Initialize GeminiSDK with Tools | 🔄 Not Started | |
-| 3.3  | Implement Basic Message Handling | 🔄 Not Started | |
-| 3.4  | Adapt Message History Format | 🔄 Not Started | |
-| 3.5  | Implement Tool Call Handling | 🔄 Not Started | |
-| 3.6  | Implement Command Execution | 🔄 Not Started | |
+| 1    | Create New Branch | ✅ Complete | Created branch `feature/migrate-to-ai-sdk-with-deepseek` |
+| 2    | Create Test Files | ✅ Complete | Created test structure in tests/gemini-sdk-migration/ |
+| 3.1  | Basic Structure and Imports | ✅ Complete | Created controller with basic structure and imports |
+| 3.2  | Initialize GeminiSDK with Tools | ✅ Complete | Configured controller to use GeminiSDK with terminal command tool |
+| 3.3  | Implement Basic Message Handling | ✅ Complete | Added basic message handling in chat-controller-sdk.ts |
+| 3.4  | Adapt Message History Format | ✅ Complete | Added formatMessagesForAISDK to message-formatter.ts |
+| 3.5  | Implement Tool Call Handling | ✅ Complete | Implemented transformation of AI SDK tool calls to our format |
+| 3.6  | Implement Command Execution | 🔄 In Progress | Basic implementation done, needs integration with terminal-service.ts |
 | 3.7  | Integrate Error Handling | 🔄 Not Started | |
 | 4    | Full Integration Test | 🔄 Not Started | |
 | 5    | Replace Original Controller | 🔄 Not Started | |
@@ -209,3 +209,31 @@ const aiSdkFormattedHistory = messages.map(msg => ({
 2. Update imports in UI components to use the new controller
 3. Run full application tests
 4. Remove or archive the original implementation if no longer needed
+
+## Progress Summary (April 22, 2025)
+
+We have made significant progress on the migration to the AI SDK format:
+
+1. **Completed:**
+   - Created the initial test structure for verifying each migration step
+   - Set up the basic controller structure in `chat-controller-sdk.ts`
+   - Added the tool definitions in AI SDK format
+   - Implemented message history formatting for AI SDK
+   - Added basic tool call handling to transform AI SDK format to our internal format
+   - Implemented the initial structure for command execution
+
+2. **In Progress:**
+   - Complete the terminal command execution integration with the AI SDK
+   - Updating the terminal-service.ts to handle both old and new API formats
+
+3. **Testing Approach:**
+   - We've created placeholder tests for all components
+   - Some tests are functional and verify component behavior directly
+   - Others are "smoke tests" with simplified assertions that the implementation exists
+   - Rather than testing full React hooks (which is challenging in Jest), we're testing individual functions and transformations
+
+4. **Next Steps:**
+   - Complete the command execution integration
+   - Implement error handling for the AI SDK format
+   - Create full integration tests
+   - Replace the original controller with the new implementation

@@ -52,3 +52,27 @@ export function formatMessagesForGeminiAPI(messages: Message[]): FormattedMessag
       }
     });
 }
+
+/**
+ * Formats chat messages for the AI SDK
+ * - Filters out loading messages
+ * - Converts our message format to AI SDK's expected format
+ */
+export function formatMessagesForAISDK(messages: Message[]): any[] {
+  return messages
+    .filter(msg => !msg.isLoading) // Filter out loading messages
+    .map(msg => {
+      // AI SDK expects 'user' or 'assistant' roles, not 'system'
+      if (msg.role === 'system') {
+        return {
+          role: 'assistant',
+          content: msg.content
+        };
+      } else {
+        return {
+          role: msg.role,
+          content: msg.content
+        };
+      }
+    });
+}
