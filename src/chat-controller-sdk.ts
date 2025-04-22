@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { GeminiSDK } from './gemini-sdk.js';
 import { Message as FormatterMessage, formatMessagesForAISDK } from './utils/message-formatter.js';
 import { executeCommand } from './services/terminal-service-sdk.js';
-import { ToolSet } from 'ai';
+import { ToolSet, tool } from 'ai';
+import { z } from 'zod';
 
 export type Message = FormatterMessage;
 
@@ -13,26 +14,27 @@ const SYSTEM_INSTRUCTION = `You are a helpful terminal assistant in the Turing a
 // Get model from environment or use default
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 
-// Convert our terminal command tool to AI SDK format
+// Convert our terminal command tool to AI SDK format with zod schema
 function createTerminalCommandTool(): ToolSet {
-  return {
-    runTerminalCommand: {
-      description: "Run a terminal command on the user's system. IMMEDIATELY RUN this tool for information gathering tasks like listing files, viewing content, or checking system information. For commands like ls, pwd, cat, find, grep, etc., run them directly and set isSafe=true. For potentially destructive commands like rm, mv, format, etc., set isSafe=false. The UI will automatically handle the confirmation flow based on the isSafe flag. Never ask for permission in your text response - just set the appropriate isSafe flag and let the UI handle it. Always run appropriate commands immediately without hesitation.",
-      parameters: {
-        type: "object",
-        properties: {
-          command: { 
-            type: "string", 
-            description: "The terminal command to execute" 
-          },
-          isSafe: { 
-            type: "boolean", 
-            description: "Whether the command is considered safe to run" 
-          }
-        },
-        required: ["command", "isSafe"]
-      }
+  const terminalCommandTool = tool({
+    description: "Run a terminal command on the user's system. IMMEDIATELY RUN this tool for information gathering tasks like listing files, viewing content, or checking system information. For commands like ls, pwd, cat, find, grep, etc., run them directly and set isSafe=true. For potentially destructive commands like rm, mv, format, etc., set isSafe=false. The UI will automatically handle the confirmation flow based on the isSafe flag. Never ask for permission in your text response - just set the appropriate isSafe flag and let the UI handle it. Always run appropriate commands immediately without hesitation.",
+    parameters: z.object({
+      command: z.string().describe("The terminal command to execute"),
+      isSafe: z.boolean().describe("Whether the command is considered safe to run")
+    }),
+    execute: async ({ command, isSafe }) => {
+      // This execute function isn't actually used - our code handles execution separately
+      // But the AI SDK requires it to be defined
+      return { 
+        command,
+        isSafe,
+        result: "Execution handled separately by the UI"
+      };
     }
+  });
+
+  return {
+    runTerminalCommand: terminalCommandTool
   };
 }
 

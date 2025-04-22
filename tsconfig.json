@@ -13,6 +13,6 @@
     "jsxFactory": "React.createElement",
     "isolatedModules": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests/**/*"]
+  "include": ["src/**/*", "scripts/**/*"],
+  "exclude": ["node_modules", "dist", "tests/**/*", "scripts/streaming-demo.ts"]
 }

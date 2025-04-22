@@ -8,10 +8,12 @@
   "scripts": {
     "build": "tsc",
     "start": "npm run build && node dist/src/chat-cli.js",
+    "start:sdk": "npm run build && node dist/src/chat-cli-sdk.js",
     "dev": "tsc -w",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
-    "test:gemini": "node gemini-test.js"
+    "test:gemini": "node gemini-test.js",
+    "test:sdk": "npm run build && node dist/scripts/test-sdk.js"
   },
   "keywords": [],
   "author": "",
