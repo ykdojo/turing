@@ -7,24 +7,39 @@ describe('LLMSDK Tests', () => {
   const testPrompt = `Return ONLY the word ${testKeyword} with no other text.`;
   
   // Available models to test with
-  const models = ['gemini-2.0-flash'];
+  const geminiModels = ['gemini-2.0-flash'];
+  const deepseekModels = ['deepseek-chat'];
   
-  // Check for API key
-  const hasApiKey = !!process.env.GEMINI_API_KEY;
+  // Check for API keys
+  const hasGeminiApiKey = !!process.env.GEMINI_API_KEY;
+  const hasDeepseekApiKey = !!process.env.DEEPSEEK_API_KEY;
   
   // Helper function to test API connectivity
-  let canConnectToApi = false;
+  let canConnectToGeminiApi = false;
+  let canConnectToDeepseekApi = false;
   
   beforeAll(async () => {
-    if (hasApiKey) {
+    if (hasGeminiApiKey) {
       try {
         // Make a simple test request to check connectivity
-        const testSdk = new LLMSDK('gemini', { modelName: models[0] });
+        const testSdk = new LLMSDK('gemini', { modelName: geminiModels[0] });
         await testSdk.sendMessage('test');
-        canConnectToApi = true;
+        canConnectToGeminiApi = true;
       } catch (err) {
         console.log('Cannot connect to Gemini API:', err.message || err);
-        canConnectToApi = false;
+        canConnectToGeminiApi = false;
+      }
+    }
+    
+    if (hasDeepseekApiKey) {
+      try {
+        // Make a simple test request to check connectivity
+        const testSdk = new LLMSDK('deepseek', { modelName: deepseekModels[0] });
+        await testSdk.sendMessage('test');
+        canConnectToDeepseekApi = true;
+      } catch (err) {
+        console.log('Cannot connect to DeepSeek API:', err.message || err);
+        canConnectToDeepseekApi = false;
       }
     }
   }, 10000);
@@ -33,6 +48,13 @@ describe('LLMSDK Tests', () => {
     it('should initialize with Gemini provider', () => {
       const sdk = new LLMSDK('gemini', {
         modelName: 'gemini-2.0-flash'
+      });
+      expect(sdk).toBeInstanceOf(LLMSDK);
+    });
+    
+    it('should initialize with DeepSeek provider', () => {
+      const sdk = new LLMSDK('deepseek', {
+        modelName: 'deepseek-chat'
       });
       expect(sdk).toBeInstanceOf(LLMSDK);
     });
@@ -50,7 +72,7 @@ describe('LLMSDK Tests', () => {
     
     it('should expose underlying provider SDK', () => {
       const sdk = new LLMSDK(provider, { 
-        modelName: models[0] 
+        modelName: geminiModels[0] 
       });
       const providerSDK = sdk.getProviderSDK();
       expect(providerSDK).toBeDefined();
@@ -60,18 +82,18 @@ describe('LLMSDK Tests', () => {
     describe('API Tests (requires API key and connectivity)', () => {
       beforeEach(() => {
         // Skip tests if API key is missing or API is unreachable
-        if (!hasApiKey) {
+        if (!hasGeminiApiKey) {
           console.log('Skipping test: GEMINI_API_KEY not available');
           return;
         }
-        if (!canConnectToApi) {
+        if (!canConnectToGeminiApi) {
           console.log('Skipping test: Cannot connect to Gemini API');
           return;
         }
       });
 
-      test.each(models)('should connect and get basic response from %s', async (modelName) => {
-        if (!hasApiKey || !canConnectToApi) return;
+      test.each(geminiModels)('should connect and get basic response from %s', async (modelName) => {
+        if (!hasGeminiApiKey || !canConnectToGeminiApi) return;
         
         const sdk = new LLMSDK(provider, { modelName });
         const response = await sdk.sendMessage(testPrompt);
@@ -79,10 +101,10 @@ describe('LLMSDK Tests', () => {
       }, 30000);
 
       test('should handle messages with appropriate response', async () => {
-        if (!hasApiKey || !canConnectToApi) return;
+        if (!hasGeminiApiKey || !canConnectToGeminiApi) return;
         
         const sdk = new LLMSDK(provider, { 
-          modelName: models[0] 
+          modelName: geminiModels[0] 
         });
         
         // We'll test basic response functionality here
@@ -101,7 +123,7 @@ describe('LLMSDK Tests', () => {
       }, 30000);
 
       test('should handle tool calls', async () => {
-        if (!hasApiKey || !canConnectToApi) return;
+        if (!hasGeminiApiKey || !canConnectToGeminiApi) return;
         
         // Define a test tool
         const testTool = tool({
@@ -116,7 +138,7 @@ describe('LLMSDK Tests', () => {
         });
         
         const sdk = new LLMSDK(provider, {
-          modelName: models[0],
+          modelName: geminiModels[0],
           tools: { testTool },
           toolChoice: 'auto', // Using AUTO mode per Claude's instructions
           maxSteps: 2
@@ -160,7 +182,7 @@ describe('LLMSDK Tests', () => {
       }, 30000);
 
       test('should support sending function results back', async () => {
-        if (!hasApiKey || !canConnectToApi) return;
+        if (!hasGeminiApiKey || !canConnectToGeminiApi) return;
         
         // Define a test tool
         const testTool = tool({
@@ -175,7 +197,7 @@ describe('LLMSDK Tests', () => {
         });
         
         const sdk = new LLMSDK(provider, {
-          modelName: models[0],
+          modelName: geminiModels[0],
           tools: { testTool },
           toolChoice: 'auto', // Using AUTO mode per Claude's instructions
           maxSteps: 2
@@ -221,6 +243,140 @@ describe('LLMSDK Tests', () => {
           }
         } catch (err) {
           console.log('API call failed, skipping test:', err);
+        }
+      }, 30000);
+    });
+  });
+  
+  describe('DeepSeek Integration', () => {
+    const provider: LLMProvider = 'deepseek';
+    
+    it('should expose underlying provider SDK', () => {
+      const sdk = new LLMSDK(provider, { 
+        modelName: deepseekModels[0] 
+      });
+      const providerSDK = sdk.getProviderSDK();
+      expect(providerSDK).toBeDefined();
+    });
+
+    // API connectivity tests
+    describe('API Tests (requires API key and connectivity)', () => {
+      beforeEach(() => {
+        // Skip tests if API key is missing or API is unreachable
+        if (!hasDeepseekApiKey) {
+          console.log('Skipping test: DEEPSEEK_API_KEY not available');
+          return;
+        }
+        if (!canConnectToDeepseekApi) {
+          console.log('Skipping test: Cannot connect to DeepSeek API');
+          return;
+        }
+      });
+
+      test.each(deepseekModels)('should connect and get basic response from %s', async (modelName) => {
+        if (!hasDeepseekApiKey || !canConnectToDeepseekApi) return;
+        
+        const sdk = new LLMSDK(provider, { modelName });
+        const response = await sdk.sendMessage(testPrompt);
+        expect(response.trim()).toBe(testKeyword);
+      }, 30000);
+
+      test('should handle tool calls', async () => {
+        if (!hasDeepseekApiKey || !canConnectToDeepseekApi) return;
+        
+        // Define a test tool
+        const testTool = tool({
+          description: 'A test tool that echoes input',
+          parameters: z.object({
+            input: z.string().describe('The input to echo back')
+          }),
+          execute: async ({ input }) => ({
+            received: input,
+            echoed: `Tool received: ${input}`
+          })
+        });
+        
+        const sdk = new LLMSDK(provider, {
+          modelName: deepseekModels[0],
+          tools: { testTool },
+          toolChoice: 'required', // Force tool usage for DeepSeek
+          maxSteps: 2
+        });
+        
+        const prompt = `Use the testTool with input: "${testKeyword}"`;
+        const result = await sdk.getToolResults(prompt);
+        
+        // Basic response structure verification
+        expect(result).toBeDefined();
+        expect(typeof result.text).toBe('string');
+        expect(Array.isArray(result.toolCalls)).toBe(true);
+        expect(Array.isArray(result.toolResults)).toBe(true);
+        
+        // Verify tool calls exist (only if not an error)
+        if (!result.text.toLowerCase().includes('error')) {
+          expect(result.toolCalls.length).toBeGreaterThanOrEqual(1);
+          
+          // Find the testTool call
+          const testToolCall = result.toolCalls.find(
+            call => call.toolName === 'testTool' && 
+            call.args && 
+            call.args.input && 
+            call.args.input.includes(testKeyword)
+          );
+          
+          expect(testToolCall).toBeDefined();
+          
+          // Find the matching tool result
+          const testToolResult = result.toolResults.find(
+            res => res.toolName === 'testTool' && 
+                  res.toolCallId === testToolCall?.toolCallId
+          );
+          
+          expect(testToolResult).toBeDefined();
+          if (testToolResult) {
+            expect(testToolResult.result).toHaveProperty('received');
+            expect(testToolResult.result.received).toContain(testKeyword);
+          }
+        }
+      }, 30000);
+
+      test('should throw error when trying to send function results back', async () => {
+        if (!hasDeepseekApiKey || !canConnectToDeepseekApi) return;
+        
+        // Define a test tool
+        const testTool = tool({
+          description: 'A test tool that echoes input',
+          parameters: z.object({
+            input: z.string().describe('The input to echo back')
+          }),
+          execute: async ({ input }) => ({
+            received: input,
+            echoed: `Tool received: ${input}`
+          })
+        });
+        
+        const sdk = new LLMSDK(provider, {
+          modelName: deepseekModels[0],
+          tools: { testTool },
+          toolChoice: 'required',
+          maxSteps: 2
+        });
+        
+        try {
+          // First, get a tool result
+          const prompt = `Use the testTool with input: "${testKeyword}"`;
+          const initialResult = await sdk.getToolResults(prompt);
+          
+          // Now try to send function results back - should throw error for DeepSeek
+          await expect(sdk.sendFunctionResults(
+            initialResult.steps,
+            'testTool',
+            JSON.stringify({ received: testKeyword, echoed: 'test' }),
+            []
+          )).rejects.toThrow('sendFunctionResults is not supported for DeepseekSDK yet');
+        } catch (err) {
+          // This is expected
+          expect(err.message).toContain('sendFunctionResults is not supported for DeepseekSDK yet');
         }
       }, 30000);
     });
