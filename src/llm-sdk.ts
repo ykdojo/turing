@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { ToolSet } from 'ai';
-import { GeminiSDK } from './gemini-sdk';
-import { DeepseekSDK } from './deepseek-sdk';
+import { GeminiSDK } from './gemini-sdk.js';
+import { DeepseekSDK } from './deepseek-sdk.js';
 
 /**
  * Types of LLM providers supported by the common SDK
