@@ -1,12 +1,13 @@
 import 'dotenv/config';
 import { google } from '@ai-sdk/google';
 import { generateText, ToolSet } from 'ai';
+import { LLMSDKInterface } from './services/terminal-service-sdk.js';
 
 // AI SDK requires GOOGLE_GENERATIVE_AI_API_KEY environment variable
 // Map from our existing GEMINI_API_KEY for compatibility
 process.env.GOOGLE_GENERATIVE_AI_API_KEY = process.env.GEMINI_API_KEY;
 
-export class GeminiSDK {
+export class GeminiSDK implements LLMSDKInterface {
   private modelName: string;
   private tools?: ToolSet;
   private toolChoice?: 'auto' | 'required' | 'none' | { type: 'tool'; toolName: string };

@@ -9,6 +9,7 @@
     "build": "tsc",
     "start": "npm run build && node dist/src/chat-cli.js",
     "start:sdk": "npm run build && node dist/src/chat-cli-sdk.js",
+    "start:deepseek": "npm run build && node dist/src/chat-cli-sdk.js --provider deepseek",
     "dev": "tsc -w",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",

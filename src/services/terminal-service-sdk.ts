@@ -1,6 +1,31 @@
 import { exec } from 'child_process';
 import { GeminiSDK } from '../gemini-sdk.js';
+import { DeepseekSDK } from '../deepseek-sdk.js';
 import { formatMessagesForAISDK } from '../utils/message-formatter.js';
+
+// Define a common SDK interface that both GeminiSDK and DeepseekSDK implement
+export interface LLMSDKInterface {
+  getToolResults(prompt: string, history?: any[]): Promise<{
+    text: string;
+    steps: any[];
+    toolCalls: any[];
+    toolResults: any[];
+    providerMetadata?: any;
+  }>;
+  
+  sendFunctionResults(
+    steps: any[],
+    toolName: string,
+    result: string,
+    history: any[]
+  ): Promise<{
+    text: string;
+    steps: any[];
+    toolCalls: any[];
+    toolResults: any[];
+    providerMetadata?: any;
+  }>;
+}
 
 // Define interfaces for our function calls
 interface FunctionCallArgs {
@@ -21,7 +46,7 @@ export function executeCommand(
   messageIndex: number, 
   callIndex: number, 
   chatSession: any,
-  api: GeminiSDK,
+  api: LLMSDKInterface,
   setMessages: (callback: (prev: any[]) => any[]) => void,
   setChatHistory: (callback: (prev: any[]) => any[]) => void,
   setPendingExecution: (value: boolean) => void,

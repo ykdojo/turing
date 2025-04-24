@@ -3,7 +3,11 @@ import { Box, Text, useInput, useApp } from 'ink';
 import Spinner from 'ink-spinner';
 import { useChatController } from './chat-controller-sdk.js';
 
-export const ChatApp = () => {
+interface ChatAppProps {
+  provider?: string;
+}
+
+export const ChatApp = ({ provider = 'gemini' }: ChatAppProps) => {
   const { 
     messages, 
     inputText,
@@ -13,7 +17,7 @@ export const ChatApp = () => {
     updateInputText,
     appendToInputText,
     backspaceInputText
-  } = useChatController();
+  } = useChatController(provider);
   
   const { exit } = useApp();
   

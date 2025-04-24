@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { useState } from 'react';
 import { GeminiSDK } from './gemini-sdk.js';
+import { DeepseekSDK } from './deepseek-sdk.js';
 import { Message as FormatterMessage, formatMessagesForAISDK } from './utils/message-formatter.js';
 import { executeCommand } from './services/terminal-service-sdk.js';
 import { ToolSet, tool } from 'ai';
@@ -24,8 +25,9 @@ interface FunctionCall {
 // System instruction for the Turing terminal assistant
 const SYSTEM_INSTRUCTION = `You are a helpful terminal assistant in the Turing application, working in the directory: ${process.cwd()}. Be proactive and run commands immediately when they would help answer the user's question. Never ask for permission in your text responses. Your job is to be efficient and helpful with minimal back-and-forth. Focus on being direct and concise when responding to user queries.`;
 
-// Get model from environment or use default
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+// Get models from environment or use defaults
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
 
 // Convert our terminal command tool to AI SDK format with zod schema
 function createTerminalCommandTool(): ToolSet {
@@ -51,16 +53,44 @@ function createTerminalCommandTool(): ToolSet {
   };
 }
 
-// Initialize with AI SDK patterns
-const geminiSdk = new GeminiSDK(
-  MODEL,
-  createTerminalCommandTool(),
-  'auto',
-  2, // maxSteps
-  SYSTEM_INSTRUCTION
-);
+// Create SDK instances based on provider
+function createSDK(provider: string) {
+  const tools = createTerminalCommandTool();
+  
+  if (provider === 'deepseek') {
+    try {
+      return new DeepseekSDK(
+        DEEPSEEK_MODEL,
+        tools,
+        'auto',
+        2, // maxSteps
+        SYSTEM_INSTRUCTION
+      );
+    } catch (error) {
+      console.error('Failed to initialize DeepseekSDK:', error);
+      console.log('Falling back to GeminiSDK...');
+      return new GeminiSDK(
+        GEMINI_MODEL,
+        tools,
+        'auto',
+        2, // maxSteps
+        SYSTEM_INSTRUCTION
+      );
+    }
+  } else {
+    return new GeminiSDK(
+      GEMINI_MODEL,
+      tools,
+      'auto',
+      2, // maxSteps
+      SYSTEM_INSTRUCTION
+    );
+  }
+}
 
-export function useChatController() {
+export function useChatController(provider = 'gemini') {
+  // Initialize the appropriate SDK based on provider
+  const sdk = createSDK(provider);
   // Start with a completely empty chat history
   const initialMessages: Message[] = [];
   
@@ -105,7 +135,7 @@ export function useChatController() {
             msgIndex, 
             callIndex, 
             msg.chatSession,
-            geminiSdk,
+            sdk,
             setMessages,
             setChatHistory,
             setPendingExecution,
@@ -138,7 +168,7 @@ export function useChatController() {
       const { messages: formattedMessages, systemPrompt } = formatMessagesForAISDK(messages);
       
       // Get response with possible tool calls
-      geminiSdk.getToolResults(userMessage, formattedMessages)
+      sdk.getToolResults(userMessage, formattedMessages)
         .then(response => {
           // Debug: Log the raw tool calls format
           if (response.toolCalls && response.toolCalls.length > 0) {
@@ -230,7 +260,7 @@ export function useChatController() {
                     commandDetails.msgIndex,
                     commandDetails.safeToolCallIndex,
                     commandDetails.chatSession,
-                    geminiSdk,
+                    sdk,
                     setMessages,
                     setChatHistory,
                     setPendingExecution,
