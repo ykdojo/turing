@@ -4,6 +4,21 @@
 
 This document outlines a simple, step-by-step plan for migrating the Turing application from direct API implementations to SDK-based implementation. The goal is to eliminate duplication and standardize on the SDK approach.
 
+## Migration Progress Tracker
+
+| Component | Original File | SDK File | Status |
+|-----------|--------------|----------|--------|
+| Chat Controller | chat-controller.ts | chat-controller-sdk.ts | ⏳ Pending |
+| Chat UI | chat-ui.tsx | chat-ui-sdk.tsx | ⏳ Pending |
+| Chat CLI | chat-cli.tsx | chat-cli-sdk.tsx | ⏳ Pending |
+| Terminal Service | terminal-service.ts | terminal-service-sdk.ts | ⏳ Pending |
+| Gemini API | gemini-api.ts | gemini-sdk.ts | ⏳ Pending |
+
+Legend:
+- ⏳ Pending: Not started
+- 🔄 In Progress: Import updates in progress
+- ✅ Complete: Original file removed, all imports updated
+
 ## 2. Current Status
 
 The codebase currently has parallel implementations:
