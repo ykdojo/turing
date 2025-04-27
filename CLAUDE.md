@@ -9,3 +9,4 @@
 - For DeepSeek streaming implementation, follow the step-by-step plan in `DEEPSEEK_STREAMING_PLAN.md`
 - Using real API calls in tests is acceptable and expected for Gemini - follow the pattern in the Gemini tests that checks for API key presence and skips tests if not available
 - For DeepSeek tests, always use it.skip to skip tests by default, regardless of API key availability
+- Never implement mocking in tests without asking for approval first
