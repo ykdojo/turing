@@ -2,6 +2,5 @@
 
 ## Docker Setup
 
-- [ ] Create Dockerfile according to specifications in DOCKER_SETUP.md
-- [ ] Create docker-compose.yml according to specifications in DOCKER_SETUP.md
-- [ ] Test Docker setup by building and running container
+- [x] Create Dockerfile according to specifications in DOCKER_SETUP.md
+- [x] Test Docker setup by building and running container
