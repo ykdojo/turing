@@ -36,42 +36,34 @@ ENV NODE_ENV=development
 CMD ["tail", "-f", "/dev/null"]
 ```
 
-### Docker Compose
-
-Create a `docker-compose.yml` file:
-
-```yaml
-version: '3.8'
-
-services:
-  turing-dev:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - .:/app
-      - node_modules:/app/node_modules
-    environment:
-      - NODE_ENV=development
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
-    ports:
-      - "3000:3000"
-
-volumes:
-  node_modules:
-```
-
 ## Using the Development Environment
 
-### Starting the Container
+### Running Options
+
+Refer to DOCKER_USAGE.md for detailed usage instructions.
+
+#### Option 1: Isolated Environment (No Volume Mount)
+
+Use this option when you want to work in an isolated environment with the files as they were when the image was built.
 
 ```bash
-# Build and start container
-docker-compose up -d
+# Build image
+docker build -t turing-dev .
 
-# Access the container shell
-docker-compose exec turing-dev bash
+# Run container
+docker run -it --name turing-dev-container turing-dev bash
+```
+
+#### Option 2: Development Environment (With Volume Mount)
+
+Use this option during development when you want changes inside the container to be reflected in your local files and vice versa.
+
+```bash
+# Build image
+docker build -t turing-dev .
+
+# Run with volume mount
+docker run -it --name turing-dev-container -v "$(pwd):/app" turing-dev bash
 ```
 
 ### Running the Project
@@ -95,7 +87,9 @@ This container provides:
 
 1. Node.js 20.4.0 for compatibility
 2. All necessary dependencies installed
-3. Volume mapping for real-time code changes
+3. Two operation modes:
+   - Isolated environment with files copied at build time
+   - Development mode with volume mapping for real-time code changes
 4. Environment variables for API keys
 
 When using Claude Code with this environment, you'll have a consistent development setup that can be used to implement the Gemini migration plan and other project tasks.

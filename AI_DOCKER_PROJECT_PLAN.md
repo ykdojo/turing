@@ -14,6 +14,23 @@ This document outlines the overall project plan for setting up and running AI co
 - [x] Create Dockerfile (as specified in DOCKER_SETUP.md)
 - [x] Build and start container with Docker
 
+### Container Setup Options
+
+#### Option 1: Isolated Environment (No Volume Mount)
+```bash
+# Create new container (or remove existing one first)
+docker stop turing-dev-container 2>/dev/null || true
+docker rm turing-dev-container 2>/dev/null || true
+docker run -it --name turing-dev-container turing-dev bash
+```
+
+#### Option 2: Development Environment (With Volume Mount)
+```bash
+# Create container with volume mount
+docker run -it --name turing-dev-container -v "$(pwd):/app" turing-dev bash
+```
+
+#### Working with Existing Container
 ```bash
 # Start existing container
 docker start turing-dev-container
