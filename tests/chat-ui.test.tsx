@@ -27,7 +27,7 @@ jest.mock('ink', () => ({
 jest.mock('ink-spinner', () => jest.fn(() => 'Loading...'));
 
 // Mock the controller
-jest.mock('../src/chat-controller', () => ({
+jest.mock('../src/chat-controller-sdk', () => ({
   useChatController: () => ({
     messages: [],
     inputText: 'test-input',
@@ -38,7 +38,7 @@ jest.mock('../src/chat-controller', () => ({
 }));
 
 // Import after mocking
-import { ChatApp } from '../src/chat-ui';
+import { ChatApp } from '../src/chat-ui-sdk';
 
 // Test our component
 describe('ChatApp component', () => {
