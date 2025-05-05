@@ -98,16 +98,45 @@ describe('GeminiSDK Tests', () => {
       
       const sdk = new GeminiSDK(models[0]);
       
-      const history = [
+      // Create a conversation history
+      const messages = [
         { role: 'user', content: "Let's talk about geography." },
         { role: 'assistant', content: "I'd be happy to discuss geography with you! What would you like to know?" }
       ];
       
+      // Ask a geography-related question
       const question = "What is the capital of France?";
-      const response = await sdk.sendMessage(question, history);
+      const response = await sdk.sendMessage(question, messages);
       
       // Verify we get a meaningful response about Paris
       expect(response.toLowerCase()).toContain("paris");
+    }, 30000);
+    
+    test('should remember information from previous messages in conversation', async () => {
+      if (!hasApiKey || !canConnectToApi) return;
+      
+      const sdk = new GeminiSDK(models[0]);
+      
+      // First message - tell the AI about favorite food
+      const firstUserMessage = "My favorite food is apple.";
+      console.log("Sending first message to the AI...");
+      const firstResponse = await sdk.sendMessage(firstUserMessage);
+      console.log("First AI response:", firstResponse);
+      
+      // Create messages array for history
+      const messages = [
+        { role: 'user', content: firstUserMessage },
+        { role: 'assistant', content: firstResponse }
+      ];
+      
+      // Second message - ask the AI to recall the favorite food
+      const secondUserMessage = "What is my favorite food?";
+      console.log("Sending second message with conversation history...");
+      const secondResponse = await sdk.sendMessage(secondUserMessage, messages);
+      console.log("Second AI response:", secondResponse);
+      
+      // Verify the AI correctly remembers the favorite food
+      expect(secondResponse.toLowerCase()).toContain("apple");
     }, 30000);
     
     test('should handle system instructions', async () => {

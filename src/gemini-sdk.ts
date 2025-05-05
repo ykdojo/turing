@@ -37,12 +37,14 @@ export class GeminiSDK implements LLMSDKInterface {
   async sendMessage(prompt: string, history?: any[]): Promise<string> {
     const options: any = {
       model: google(this.modelName),
-      prompt
     };
     
-    // Add history if provided
+    // If we have history, use messages format with the current prompt as the last user message
     if (history && history.length > 0) {
-      options.history = history;
+      options.messages = [...history, { role: 'user', content: prompt }];
+    } else {
+      // If no history, use simple prompt format
+      options.prompt = prompt;
     }
 
     // Add system prompt if provided
@@ -86,15 +88,17 @@ export class GeminiSDK implements LLMSDKInterface {
     try {
       const options: any = {
         model: google(this.modelName),
-        prompt,
         tools: this.tools,
         toolChoice: this.toolChoice,
         maxSteps: this.maxSteps || 2 // Default to 2 steps if not set
       };
       
-      // Add history if provided
+      // If we have history, use messages format with the current prompt as the last user message
       if (history && history.length > 0) {
-        options.history = history;
+        options.messages = [...history, { role: 'user', content: prompt }];
+      } else {
+        // If no history, use simple prompt format
+        options.prompt = prompt;
       }
       
       // Add system prompt if provided
@@ -151,16 +155,18 @@ export class GeminiSDK implements LLMSDKInterface {
       
       const options: any = {
         model: google(this.modelName),
-        prompt: "Continue with the results from the previous tool call", // Minimal prompt since we're using history
         tools: this.tools,
         toolChoice: this.toolChoice,
         maxSteps: this.maxSteps || 2,
         toolResults: [toolResult]
       };
       
-      // Add history if provided
+      // If we have history, use messages format
       if (history && history.length > 0) {
-        options.history = history;
+        options.messages = [...history, { role: 'user', content: "Continue with the results from the previous tool call" }];
+      } else {
+        // If no history, use simple prompt format
+        options.prompt = "Continue with the results from the previous tool call";
       }
       
       // Add system prompt if provided
