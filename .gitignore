@@ -21,3 +21,12 @@ scripts/*.js
 
 # Environment variables
 .env
+**/.claude/settings.local.json
+
+# Coverage reports
+coverage/
+
+# Temporary files
+*.log
+.tmp/
+temp/
